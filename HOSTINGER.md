@@ -6,6 +6,22 @@ storage. The older Cloudflare/D1 application is retained separately.
 
 ## 1. Configure Supabase
 
+The dedicated project is **samuel-finance-limited**, reference
+**vyyqxcwfxuxjdqxspkrb**, in Sydney. Its initial CMS migration and authentication
+configuration have been applied. The approved owner account has been
+provisioned. Use password recovery to choose your own password;
+no initial password was shared or saved in the repository.
+
+The ignored **.env.local** contains the project URL and publishable application
+key ready to copy into Hostinger's runtime environment variables. It contains
+no service-role key. Project identity is recorded in **supabase/project.json**.
+On another checkout, link with:
+
+    npx supabase link vyyqxcwfxuxjdqxspkrb
+
+The remaining setup instructions are also applicable to a fresh project; do
+not manually replay the initial migration on this already-provisioned project.
+
 Apply **supabase/migrations/20261112000100_cms.sql** once through a Supabase
 migration connection or the project's SQL Editor. The migration is transactional
 and creates:

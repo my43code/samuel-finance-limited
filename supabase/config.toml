@@ -1,0 +1,15 @@
+project_id = "samuel-finance-limited"
+
+[db]
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "https://samuelfinancelimited.com"
+additional_redirect_urls = ["https://samuelfinancelimited.com/auth/callback", "http://127.0.0.1:3000/auth/callback", "http://localhost:3000/auth/callback"]
+enable_signup = false
+minimum_password_length = 12
+
+[auth.email]
+enabled = true
+enable_confirmations = true

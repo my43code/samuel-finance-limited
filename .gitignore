@@ -35,6 +35,9 @@ yarn-error.log*
 # Checkout-local tool state
 /.wrangler/
 /.sites-runtime/
+/supabase/.temp/
+/supabase/.branches/
+/.supabase/
 
 # Workspace scaffolding and publication archives
 /.agents/
