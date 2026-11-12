@@ -1,5 +1,6 @@
 import { ArrowUpRight, Mail, Phone, LockKeyhole, MapPin } from "lucide-react";
 import Brand from "./brand";
+import ContactPopover from "./contact-popover";
 export function PublicHeader() {
   return (
     <>
@@ -97,6 +98,7 @@ export function PublicShell({ children, company }) {
       <PublicHeader />
       {children}
       <PublicFooter company={company} />
+      <ContactPopover phone={company.phone} whatsapp={company.whatsapp} />
     </div>
   );
 }

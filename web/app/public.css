@@ -104,6 +104,98 @@
     padding: 24px 22px 26px;
   }
 }
+
+/* Always-available contact prompt. Values are supplied by the published company profile. */
+.contact-popover {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+  width: min(292px, calc(100vw - 32px));
+  padding: 23px 22px 20px;
+  border: 1px solid #dfe6d9;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 55px #173e2f29;
+}
+.contact-popover-close {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #81907f;
+}
+.contact-popover-close:hover {
+  background: #f0f4eb;
+  color: #173e2f;
+}
+.contact-popover > .eyebrow {
+  margin-bottom: 11px;
+  color: #a18b59;
+  font-size: 7px;
+  letter-spacing: 1.4px;
+}
+.contact-popover > strong {
+  display: block;
+  padding-right: 24px;
+  color: #2f543a;
+  font: 25px/1.1 var(--serif);
+  font-weight: 400;
+}
+.contact-popover > p {
+  margin: 7px 0 16px;
+  color: #8d9c86;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.contact-popover-links {
+  display: grid;
+  gap: 8px;
+  padding-top: 13px;
+  border-top: 1px solid #e6ebe2;
+}
+.contact-popover-links a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: #315c45;
+  font-size: 11px;
+}
+.contact-popover-links a:hover {
+  color: #a07d3f;
+}
+.contact-popover-links a > svg {
+  flex: 0 0 auto;
+  color: #a07d3f;
+}
+.contact-popover-links a > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.contact-popover-links small {
+  display: block;
+  margin-bottom: 2px;
+  color: #9ba58e;
+  font-size: 6px;
+  letter-spacing: 1.1px;
+}
+
+@media (max-width: 620px) {
+  .contact-popover {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: auto;
+  }
+}
 .public-utility {
   display: flex;
   align-items: center;
@@ -130,6 +222,9 @@
   gap: 25px;
   border-bottom: 1px solid #e8ebe2;
   background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 .public-header > nav {
   display: flex;
