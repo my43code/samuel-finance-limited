@@ -1,0 +1,680 @@
+// Integration tests use a local Supabase protocol fixture, never a live project.
+// Postgres RLS is exercised separately in cms-security.test.mjs.
+import assert from "node:assert/strict";
+import http from "node:http";
+import { spawn } from "node:child_process";
+import { mkdir, readFile } from "node:fs/promises";
+import { chromium } from "playwright-core";
+import { companyDefaults } from "../web/lib/defaults.js";
+const output = new URL("../outputs/previews/", import.meta.url);
+await mkdir(output, { recursive: true });
+const adminId = "11111111-1111-4111-8111-111111111111";
+const visitorId = "22222222-2222-4222-8222-222222222222";
+const state = {
+  entries: [],
+  media: [],
+  activity: [],
+  company: ["draft", "published"].map((id) => ({
+    id,
+    content: { ...companyDefaults },
+    revision: 1,
+    updated_at: new Date().toISOString(),
+  })),
+};
+const files = new Map();
+let mockUrl;
+const makeUser = (id) => ({
+  id,
+  email: id === adminId ? "admin@example.test" : "visitor@example.test",
+  aud: "authenticated",
+  role: "authenticated",
+  app_metadata: { provider: "email", providers: ["email"] },
+  user_metadata: {},
+  created_at: new Date().toISOString(),
+});
+function session(id) {
+  const token =
+    Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString(
+      "base64url",
+    ) +
+    "." +
+    Buffer.from(
+      JSON.stringify({
+        sub: id,
+        role: "authenticated",
+        aud: "authenticated",
+        iss: mockUrl + "/auth/v1",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      }),
+    ).toString("base64url") +
+    ".fixture-signature";
+  return {
+    access_token: token,
+    refresh_token: "test-refresh-token",
+    expires_in: 3600,
+    token_type: "bearer",
+    user: makeUser(id),
+  };
+}
+function userId(req) {
+  try {
+    return JSON.parse(
+      Buffer.from(
+        (req.headers.authorization || "").split(".")[1],
+        "base64url",
+      ).toString(),
+    ).sub;
+  } catch {
+    return null;
+  }
+}
+function matches(row, url) {
+  return [...url.searchParams].every(
+    ([k, v]) => !v.startsWith("eq.") || String(row[k]) === v.slice(3),
+  );
+}
+function decorated(rows, url) {
+  return rows
+    .filter((r) => matches(r, url))
+    .map((r) =>
+      url.searchParams.get("select")?.includes("media:")
+        ? { ...r, media: state.media.find((m) => m.id === r.media_id) || null }
+        : r,
+    );
+}
+const mock = http.createServer(async (req, res) => {
+  const url = new URL(req.url, "http://localhost");
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  const raw = Buffer.concat(chunks);
+  let body;
+  try {
+    body = JSON.parse(raw.toString());
+  } catch {
+    body = {};
+  }
+  const admin = userId(req) === adminId;
+  const send = (value, status = 200) => {
+    res.writeHead(status, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(value));
+  };
+  if (url.pathname === "/auth/v1/token") {
+    if (body.password !== "Fixture-password-only!2026")
+      return send(
+        { error: "invalid_grant", error_description: "Invalid credentials" },
+        400,
+      );
+    return send(
+      session(body.email === "admin@example.test" ? adminId : visitorId),
+    );
+  }
+  if (url.pathname === "/auth/v1/user")
+    return userId(req)
+      ? send(makeUser(userId(req)))
+      : send({ msg: "Not authenticated" }, 401);
+  if (url.pathname === "/auth/v1/logout") {
+    res.writeHead(204);
+    return res.end();
+  }
+  if (url.pathname === "/auth/v1/recover") return send({});
+  if (url.pathname === "/rest/v1/rpc/cms_save_company") {
+    if (!admin) return send({ message: "Forbidden" }, 403);
+    const draft = state.company.find((c) => c.id === "draft");
+    if (draft.revision !== body.expected_revision)
+      return send({ message: "revision_conflict" }, 400);
+    draft.content = body.content;
+    draft.revision++;
+    draft.updated_at = new Date().toISOString();
+    if (body.publish_now)
+      Object.assign(
+        state.company.find((c) => c.id === "published"),
+        { content: body.content, updated_at: draft.updated_at },
+      );
+    return send(null);
+  }
+  if (url.pathname.startsWith("/rest/v1/")) {
+    const table = url.pathname.split("/").pop();
+    const rows =
+      table === "cms_admins"
+        ? admin
+          ? [
+              {
+                user_id: adminId,
+                display_name: "Samuel Finance Admin",
+                role: "owner",
+              },
+            ]
+          : []
+        : state[table.replace("cms_", "")];
+    if (!rows) return send({ message: "Unknown fixture table " + table }, 404);
+    if (req.method === "GET") {
+      let allowed = rows;
+      if (!admin && table === "cms_entries")
+        allowed = rows.filter((r) => r.status === "published");
+      if (!admin && table === "cms_media")
+        allowed = rows.filter((r) =>
+          state.entries.some(
+            (e) => e.media_id === r.id && e.status === "published",
+          ),
+        );
+      if (!admin && table === "cms_company")
+        allowed = rows.filter((r) => r.id === "published");
+      if (!admin && table === "cms_activity") allowed = [];
+      const values = decorated(allowed, url);
+      return send(
+        req.headers.accept?.includes("vnd.pgrst.object")
+          ? values[0] || null
+          : values,
+      );
+    }
+    if (!admin) return send({ message: "Forbidden" }, 403);
+    if (req.method === "POST") {
+      const row = {
+        ...body,
+        id: body.id || crypto.randomUUID(),
+        revision: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        published_at:
+          body.status === "published" ? new Date().toISOString() : null,
+      };
+      rows.unshift(row);
+      state.activity.unshift({
+        id: state.activity.length + 1,
+        actor: adminId,
+        action: "insert",
+        target: table,
+        title: row.title || row.name,
+        created_at: row.created_at,
+      });
+      return send(
+        req.headers.accept?.includes("vnd.pgrst.object") ? row : [row],
+        201,
+      );
+    }
+    if (req.method === "PATCH") {
+      const row = rows.find((r) => matches(r, url));
+      if (row)
+        Object.assign(row, body, {
+          revision: row.revision + 1,
+          updated_at: new Date().toISOString(),
+          published_at:
+            body.status === "published" ? new Date().toISOString() : null,
+        });
+      return send(
+        req.headers.accept?.includes("vnd.pgrst.object")
+          ? row || null
+          : row
+            ? [row]
+            : [],
+      );
+    }
+    if (req.method === "DELETE") {
+      const selected = rows.filter((r) => matches(r, url));
+      for (const row of selected) rows.splice(rows.indexOf(row), 1);
+      return send(
+        req.headers.accept?.includes("vnd.pgrst.object")
+          ? selected[0] || null
+          : selected,
+      );
+    }
+  }
+  if (url.pathname.startsWith("/storage/v1/object/sign/company-media/")) {
+    const path = decodeURIComponent(url.pathname.split("/company-media/")[1]);
+    if (req.method === "POST")
+      return send({
+        signedURL: "/object/sign/company-media/" + path + "?token=fixture",
+      });
+    const file = files.get(path);
+    if (!file) {
+      res.writeHead(404);
+      return res.end();
+    }
+    res.writeHead(200, { "Content-Type": file.mime });
+    return res.end(file.bytes);
+  }
+  if (url.pathname.startsWith("/storage/v1/object/company-media")) {
+    if (!admin) return send({ message: "Forbidden" }, 403);
+    if (req.method === "POST") {
+      const path = decodeURIComponent(url.pathname.split("/company-media/")[1]);
+      files.set(path, { bytes: raw, mime: req.headers["content-type"] });
+      return send({ Key: "company-media/" + path, Id: crypto.randomUUID() });
+    }
+    if (req.method === "DELETE") {
+      for (const p of body.prefixes || []) files.delete(p);
+      return send([]);
+    }
+  }
+  return send(
+    {
+      message: "Unexpected fixture request " + req.method + " " + url.pathname,
+    },
+    404,
+  );
+});
+await new Promise((resolve) => mock.listen(0, "127.0.0.1", resolve));
+mockUrl = "http://127.0.0.1:" + mock.address().port;
+const base = "http://127.0.0.1:3199";
+const child = spawn(process.execPath, [".next/standalone/server.js"], {
+  env: {
+    ...process.env,
+    PORT: "3199",
+    HOSTNAME: "127.0.0.1",
+    SUPABASE_URL: mockUrl,
+    SUPABASE_ANON_KEY: "fixture-publishable-key",
+    SITE_URL: base,
+  },
+  stdio: ["ignore", "pipe", "pipe"],
+});
+let logs = "";
+child.stdout.on("data", (d) => (logs += d));
+child.stderr.on("data", (d) => (logs += d));
+let browser;
+try {
+  let ready = false;
+  for (let i = 0; i < 100; i++) {
+    try {
+      const r = await fetch(base, { signal: AbortSignal.timeout(3000) });
+      if (r.ok) {
+        ready = true;
+        break;
+      }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  assert.ok(ready, "Next.js server failed: " + logs);
+  assert.equal((await fetch(base + "/api/admin/overview")).status, 401);
+  assert.equal(
+    (
+      await fetch(base + "/api/admin/entries", {
+        method: "POST",
+        headers: {
+          Origin: "https://untrusted.test",
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      })
+    ).status,
+    403,
+  );
+  browser = await chromium.launch({
+    executablePath:
+      process.env.EDGE_PATH ||
+      "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    headless: true,
+  });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(base, { waitUntil: "networkidle" });
+  await page.screenshot({
+    path: new URL("website-desktop.png", output).pathname.replace(
+      /^\/([A-Z]:)/,
+      "$1",
+    ),
+    fullPage: true,
+  });
+  await page.goto(base + "/admin");
+  await page.waitForURL("**/admin/login");
+  await page.screenshot({
+    path: new URL("admin-login-desktop.png", output).pathname.replace(
+      /^\/([A-Z]:)/,
+      "$1",
+    ),
+    fullPage: true,
+  });
+  await page.locator("input[name=email]").fill("visitor@example.test");
+  await page.locator("input[name=password]").fill("Fixture-password-only!2026");
+  await page.getByRole("button", { name: "Sign in to your workspace" }).click();
+  await page
+    .getByRole("alert")
+    .filter({ hasText: "does not have administrator access" })
+    .waitFor();
+  await page.locator("input[name=email]").fill("admin@example.test");
+  await page.getByRole("button", { name: "Sign in to your workspace" }).click();
+  await page.waitForURL(base + "/admin");
+  await page
+    .getByRole("heading", { name: "Your website, well managed." })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Create an update", exact: true })
+    .first()
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .getByLabel("Title", { exact: true })
+    .fill("A considered way forward");
+  await dialog
+    .getByLabel("Short description")
+    .fill("An update about our company and the next chapter of our work.");
+  await dialog
+    .getByLabel("Full update")
+    .fill(
+      "This is a test announcement.\n\nThis content is written only to the local test fixture.",
+    );
+  await dialog.getByRole("button", { name: "Save draft", exact: true }).click();
+  await dialog.waitFor({ state: "hidden" });
+  assert.equal(state.entries[0].status, "draft");
+  const guest = await browser.newContext();
+  assert.equal(
+    (
+      await guest.request.get(base + "/updates/" + state.entries[0].id)
+    ).status(),
+    404,
+  );
+  await page
+    .getByRole("button", { name: "Edit A considered way forward", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Publish", exact: true })
+    .click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  assert.equal(state.entries[0].status, "published");
+  const article = await guest.request.get(
+    base + "/updates/" + state.entries[0].id,
+  );
+  assert.equal(article.status(), 200);
+  assert.match(await article.text(), /A considered way forward/);
+  await page
+    .getByRole("button", { name: "Media library", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Upload files", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .locator("input[type=file]")
+    .setInputFiles({
+      name: "application.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.7\nFixture document only.\n%%EOF"),
+    });
+  await page
+    .getByRole("dialog")
+    .getByLabel("File title")
+    .fill("Loan application resource");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Description / alternative text")
+    .fill("A test PDF application form");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Upload to library" })
+    .click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  assert.equal(state.media.length, 1);
+  assert.equal(
+    (
+      await guest.request.get(base + "/api/media/" + state.media[0].id)
+    ).status(),
+    404,
+  );
+  await page.getByRole("button", { name: "Loan forms", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add loan form", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Title", { exact: true })
+    .fill("Personal loan application");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Short description")
+    .fill("Read the instructions before completing this form.");
+  await page
+    .getByRole("dialog")
+    .getByLabel("PDF application form", { exact: false })
+    .selectOption(state.media[0].id);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Publish", exact: true })
+    .click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  assert.equal(
+    (
+      await guest.request.get(base + "/api/media/" + state.media[0].id)
+    ).status(),
+    200,
+  );
+  const linkedDelete = await context.request.delete(base + "/api/admin/media", {
+    headers: { Origin: base },
+    data: { id: state.media[0].id },
+  });
+  assert.equal(linkedDelete.status(), 409);
+  const imageUpload = await context.request.post(base + "/api/admin/media", {
+    headers: { Origin: base },
+    multipart: {
+      file: {
+        name: "company-logo.png",
+        mimeType: "image/png",
+        buffer: await readFile(
+          new URL("../public/assets/logo.png", import.meta.url),
+        ),
+      },
+      name: "Company image",
+      alt_text: "Samuel Finance company emblem",
+    },
+  });
+  assert.equal(imageUpload.status(), 201);
+  assert.equal(
+    (await imageUpload.json()).media.mime,
+    "image/jpeg",
+    "File format is checked from content, not the filename",
+  );
+  const videoBytes = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#163f34";
+    ctx.fillRect(0, 0, 64, 64);
+    const stream = canvas.captureStream(10),
+      recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    const chunks = [];
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    await new Promise((resolve) => {
+      recorder.onstop = resolve;
+      recorder.start();
+      setTimeout(() => recorder.stop(), 500);
+    });
+    stream.getTracks().forEach((t) => t.stop());
+    return Array.from(
+      new Uint8Array(
+        await new Blob(chunks, { type: "video/webm" }).arrayBuffer(),
+      ),
+    );
+  });
+  const videoUpload = await context.request.post(base + "/api/admin/media", {
+    headers: { Origin: base },
+    multipart: {
+      file: {
+        name: "company-video.webm",
+        mimeType: "video/webm",
+        buffer: Buffer.from(videoBytes),
+      },
+      name: "Company video",
+      alt_text: "Company colour video fixture",
+    },
+  });
+  assert.equal(videoUpload.status(), 201);
+  const video = (await videoUpload.json()).media;
+  const gallery = await context.request.post(base + "/api/admin/entries", {
+    headers: { Origin: base },
+    data: {
+      kind: "media",
+      title: "A moment from Samuel Finance",
+      summary: "Test gallery caption.",
+      body: "",
+      status: "published",
+      media_id: video.id,
+      location: "",
+      employment_type: "",
+      closing_date: "",
+      apply_email: "",
+    },
+  });
+  assert.equal(gallery.status(), 201);
+  const largeVideo = Buffer.alloc(11 * 1024 * 1024);
+  Buffer.from(videoBytes).copy(largeVideo);
+  const largeUpload = await context.request.post(base + "/api/admin/media", {
+    headers: { Origin: base },
+    multipart: {
+      file: {
+        name: "large-video.webm",
+        mimeType: "video/webm",
+        buffer: largeVideo,
+      },
+      name: "Transport limit check",
+      alt_text: "Temporary large video transport test",
+    },
+  });
+  assert.equal(
+    largeUpload.status(),
+    201,
+    "Video uploads can exceed the default 10 MB proxy limit",
+  );
+  const invalidUpload = await context.request.post(base + "/api/admin/media", {
+    headers: { Origin: base },
+    multipart: {
+      file: {
+        name: "fake.png",
+        mimeType: "image/png",
+        buffer: Buffer.from('<svg onload="alert(1)"/>'),
+      },
+      name: "Rejected file",
+      alt_text: "This unsupported file must be rejected",
+    },
+  });
+  assert.equal(invalidUpload.status(), 415);
+  await page
+    .getByRole("button", { name: "Job vacancies", exact: true })
+    .click();
+  await page.getByRole("button", { name: "New vacancy", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Job title")
+    .fill("Accounts Officer");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Short description")
+    .fill("A test vacancy for the local integration checks.");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Job description & application instructions")
+    .fill("Support accurate company records and clear communication.");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Location", { exact: true })
+    .fill("Port Moresby");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Employment type")
+    .selectOption("Full-time");
+  await page.getByRole("dialog").getByLabel("Closing date").fill("2027-12-31");
+  await page
+    .getByRole("dialog")
+    .getByLabel("Application email")
+    .fill("careers@example.test");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Publish", exact: true })
+    .click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  assert.match(
+    await (await guest.request.get(base + "/careers")).text(),
+    /Accounts Officer/,
+  );
+  await page
+    .getByRole("button", { name: "Company profile", exact: true })
+    .click();
+  await page
+    .getByLabel("Company headline")
+    .fill("A carefully considered next chapter.");
+  await page.getByRole("button", { name: "Review & publish" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Publish company profile" })
+    .click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  assert.match(
+    await (await guest.request.get(base)).text(),
+    /A carefully considered next chapter/,
+  );
+  const stale = await context.request.post(base + "/api/admin/company", {
+    headers: { Origin: base },
+    data: { revision: 1, publish: true, content: companyDefaults },
+  });
+  assert.equal(stale.status(), 409);
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
+  await page.screenshot({
+    path: new URL("dashboard-desktop-fixture.png", output).pathname.replace(
+      /^\/([A-Z]:)/,
+      "$1",
+    ),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    ),
+    false,
+    "Mobile dashboard overflows",
+  );
+  await page.screenshot({
+    path: new URL("dashboard-mobile-fixture.png", output).pathname.replace(
+      /^\/([A-Z]:)/,
+      "$1",
+    ),
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "Open navigation", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Account & security", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Sign out of workspace" }).click();
+  await page.waitForURL("**/admin/login");
+  await page.screenshot({
+    path: new URL("admin-login-mobile.png", output).pathname.replace(
+      /^\/([A-Z]:)/,
+      "$1",
+    ),
+    fullPage: true,
+  });
+  await page.goto(base, { waitUntil: "networkidle" });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    ),
+    false,
+    "Mobile homepage overflows",
+  );
+  await page.screenshot({
+    path: new URL("website-mobile.png", output).pathname.replace(
+      /^\/([A-Z]:)/,
+      "$1",
+    ),
+    fullPage: true,
+  });
+  assert.equal(
+    (await context.request.get(base + "/api/admin/overview")).status(),
+    401,
+  );
+  assert.deepEqual(errors, [], "Browser runtime errors");
+  console.log(
+    "PASS: admin authorization, login, draft privacy, publishing, PDF upload/download, linked-file protection, vacancy publishing, profile publishing, revision conflicts, logout, mobile layouts and browser runtime checks.",
+  );
+} catch (error) {
+  console.error(logs);
+  throw error;
+} finally {
+  if (browser) await browser.close();
+  child.kill();
+  await new Promise((resolve) => mock.close(resolve));
+}

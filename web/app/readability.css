@@ -1,0 +1,412 @@
+/* Normal-size reading text and stronger contrast across both workspaces. */
+.cms-sidebar nav > button {
+  font-size: 12px;
+}
+.sidebar-section-label {
+  font-size: 9px;
+}
+.sidebar-help p {
+  font-size: 11px;
+  color: #b3c2a6;
+}
+.sidebar-help > a {
+  font-size: 11px;
+}
+.sidebar-user strong {
+  font-size: 12px;
+}
+.sidebar-user small {
+  font-size: 9px;
+  color: #acbfa6;
+}
+.cms-topbar > div {
+  font-size: 11px;
+}
+.workspace-heading p {
+  font-size: 12px;
+  color: #728168;
+}
+.stat-panel > div {
+  font-size: 11px;
+  color: #6c7c61;
+}
+.stat-panel p {
+  font-size: 10px;
+  color: #7d8c72;
+}
+.content-table th {
+  font-size: 8px;
+  color: #7f8e71;
+}
+.content-title strong {
+  font-size: 12px;
+  color: #465b3f;
+}
+.content-title small {
+  font-size: 10px;
+  color: #7e8f70;
+}
+.date-cell {
+  font-size: 10px;
+  color: #7f8c72;
+}
+.status-pill {
+  font-size: 9px;
+}
+.status-pill.published {
+  color: #55743d;
+}
+.status-pill.draft {
+  color: #8b6f29;
+}
+.card-top p {
+  font-size: 11px;
+  color: #7c8d6b;
+}
+.card-top .text-button {
+  font-size: 10px;
+}
+.activity-list strong {
+  font-size: 12px;
+  color: #566648;
+}
+.activity-list p {
+  font-size: 10px;
+  color: #829171;
+}
+.activity-time {
+  font-size: 9px;
+  color: #869674;
+}
+.cms-empty p {
+  font-size: 12px;
+  color: #7d8e6c;
+}
+.form-field {
+  font-size: 12px;
+  color: #5c7148;
+}
+.form-field small {
+  font-size: 10px;
+  color: #7e9169;
+}
+.form-field input,
+.form-field textarea,
+.form-field select {
+  font-size: 13px;
+  color: #445d35;
+}
+.publishing-guide > p {
+  font-size: 12px;
+  color: #7f926b;
+}
+.publishing-guide li p {
+  font-size: 10px;
+  color: #81956c;
+}
+.last-published > p {
+  font-size: 11px;
+  color: #83966c;
+}
+.quick-start > button {
+  font-size: 10px;
+  color: #758a5d;
+}
+.login-description {
+  font-size: 13px;
+  color: #6d7d65;
+}
+.login-form > label {
+  font-size: 12px;
+}
+.input-with-icon > input {
+  font-size: 13px;
+}
+.login-form-note > span {
+  font-size: 10px;
+  color: #7e9070;
+}
+.login-form-note > .text-button {
+  font-size: 11px;
+}
+.login-assurance p {
+  font-size: 11px;
+  color: #7c8c6d;
+}
+.login-assurance p span {
+  font-size: 10px;
+  color: #8b9b7b;
+}
+.login-story-content > p {
+  color: #c1d0bd;
+}
+.account-card > p,
+.security-card > p,
+.security-row p {
+  font-size: 12px;
+  color: #7c9166;
+}
+.security-row strong {
+  font-size: 12px;
+  color: #657e4f;
+}
+.account-facts > div,
+.account-facts strong {
+  font-size: 11px;
+}
+.account-facts span {
+  color: #80946b;
+}
+.cms-topbar .workspace-status {
+  font-size: 10px;
+  color: #7f8d73;
+}
+.hero-copy > p {
+  font-size: 14px;
+  color: #65745e;
+}
+.hero-note {
+  font-size: 10px;
+  color: #829073;
+}
+.public-header > nav {
+  font-size: 12px;
+  color: #536949;
+}
+.values-ribbon > strong {
+  font-size: 12px;
+  color: #627b4e;
+}
+.values-ribbon > span {
+  font-size: 8px;
+  color: #8b9b79;
+}
+.company-story > p:not(.lead) {
+  font-size: 14px;
+  color: #6d7966;
+}
+.mission > p {
+  font-size: 14px;
+  color: #6b7f59;
+}
+.section-heading > p {
+  font-size: 13px;
+  color: #78856d;
+}
+.approach-grid p {
+  font-size: 13px;
+  color: #6e7d61;
+}
+.approach-grid h3 {
+  font-size: 19px;
+  color: #536e41;
+}
+.update-info p {
+  font-size: 13px;
+  color: #7e8f6d;
+}
+.update-info > .eyebrow {
+  font-size: 8px;
+  color: #7d9068;
+}
+.update-info .text-link {
+  font-size: 11px;
+}
+.public-empty p {
+  font-size: 13px;
+  color: #7b8d69;
+}
+.resources-band p {
+  font-size: 13px;
+  color: #afc39b;
+}
+.resources-band .eyebrow {
+  color: #b0c39b;
+}
+.resources-lines small {
+  font-size: 8px;
+  color: #adc495;
+}
+.contact-section > div > p {
+  font-size: 13px;
+  color: #73865f;
+}
+.contact-list > a > span,
+.contact-list > div > span {
+  font-size: 16px;
+  color: #597649;
+}
+.contact-list small {
+  font-size: 9px;
+  color: #8a9d73;
+}
+.contact-list small.hours {
+  font-size: 12px;
+  color: #7a9066;
+}
+.contact-list > a.contact-whatsapp {
+  font-size: 12px;
+  color: #67874c;
+}
+.public-notice p {
+  font-size: 11px;
+  color: #7c9168;
+}
+.footer-main > div:not(:first-child) > a {
+  font-size: 12px;
+  color: #b7cba4;
+}
+.footer-main > div:first-child > p {
+  font-size: 13px;
+  color: #abc198;
+}
+.footer-main .eyebrow {
+  font-size: 9px;
+  color: #a4bd8d;
+}
+.footer-location {
+  font-size: 12px;
+  color: #abc198;
+}
+.footer-legal {
+  font-size: 10px;
+  color: #9eb88a;
+}
+.footer-legal a {
+  color: #b4c99f;
+}
+.page-intro > p {
+  font-size: 14px;
+  color: #788f61;
+}
+.article-body p {
+  font-size: 15px;
+  color: #657f50;
+}
+.article-summary {
+  font-size: 18px;
+  color: #7b9664;
+}
+.document-card p {
+  font-size: 13px;
+  color: #7f9668;
+}
+.document-card .eyebrow {
+  font-size: 8px;
+  color: #8a9e73;
+}
+.download-notice p {
+  font-size: 13px;
+  color: #7e9666;
+}
+.job-meta > span {
+  font-size: 12px;
+  color: #809b63;
+}
+.job-apply p {
+  font-size: 14px;
+  color: #809b63;
+}
+@media (max-width: 1150px) {
+  .public-header > nav {
+    font-size: 11px;
+    gap: 15px;
+  }
+  .values-ribbon > strong {
+    font-size: 10px;
+  }
+  .hero-copy > p {
+    font-size: 13px;
+  }
+  .hero-copy > .eyebrow {
+    font-size: 7px;
+  }
+  .footer-main > div:not(:first-child) > a {
+    font-size: 11px;
+  }
+}
+@media (max-width: 850px) {
+  .values-ribbon > strong {
+    font-size: 9px;
+  }
+  .hero-copy > p {
+    font-size: 12px;
+  }
+  .hero-note {
+    font-size: 8px;
+  }
+  .section-heading > p,
+  .approach-grid p {
+    font-size: 12px;
+  }
+  .contact-list > a > span,
+  .contact-list > div > span {
+    font-size: 13px;
+  }
+  .contact-list > a.contact-whatsapp {
+    font-size: 10px;
+  }
+  .footer-location,
+  .footer-main > div:not(:first-child) > a {
+    font-size: 11px;
+  }
+}
+@media (max-width: 580px) {
+  .hero-copy > p {
+    font-size: 14px;
+  }
+  .hero-note {
+    font-size: 9px;
+  }
+  .values-ribbon > strong {
+    font-size: 12px;
+  }
+  .company-story > p:not(.lead),
+  .mission > p {
+    font-size: 14px;
+  }
+  .approach-grid p,
+  .section-heading > p {
+    font-size: 13px;
+  }
+  .contact-list > a > span,
+  .contact-list > div > span {
+    font-size: 15px;
+  }
+  .footer-main > div:not(:first-child) > a,
+  .footer-location {
+    font-size: 11px;
+  }
+  .footer-legal {
+    font-size: 9px;
+  }
+  .article-body p {
+    font-size: 14px;
+  }
+}
+@media (max-width: 480px) {
+  .content-title strong {
+    font-size: 11px;
+  }
+  .content-title small {
+    font-size: 9px;
+  }
+  .status-pill {
+    font-size: 8px;
+  }
+  .workspace-heading p {
+    font-size: 11px;
+  }
+  .stat-panel p {
+    font-size: 9px;
+  }
+  .stat-panel > div {
+    font-size: 10px;
+  }
+  .cms-topbar > div {
+    font-size: 10px;
+  }
+  .cms-topbar .workspace-status {
+    display: none;
+  }
+}
