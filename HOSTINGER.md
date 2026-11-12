@@ -2,11 +2,18 @@
 
 ## GitHub Node.js deployment
 
-The standard `npm run build` also runs `postbuild` to prepare `out/index.html`
-and its public assets. This is the static output recognized by Hostinger's
-Next.js deployment check. The Vinext/Worker output remains under `dist/`.
-Redeploy the latest `main` commit in hPanel. If an output directory is requested,
-use `out`. To build only the public static website, use `npm run build:hostinger`.
+Use the Next.js framework preset, build command `npm run build`, and start
+command `npm start`. Reset any previous custom output directory of `out`:
+the deployable server is now `.next/standalone/server.js`.
+
+The build runs the real Next.js compiler against an isolated public website
+entry, copies the traced runtime to `.next/standalone`, and includes public
+assets and Next.js static files. It fails if the expected server is missing.
+`npm start` runs this standalone server. Hostinger supplies the runtime port.
+
+The independent Cloudflare build and preview commands are now
+`npm run build:sites` and `npm run start:sites`. To export only the static
+website, use `npm run build:hostinger`; its output is `out/`.
 
 This output serves the company homepage; it does not include the Cloudflare
 admin/API backend.
