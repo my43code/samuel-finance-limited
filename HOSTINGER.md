@@ -1,5 +1,18 @@
 # Hostinger deployment
 
+## GitHub Node.js deployment
+
+The standard `npm run build` also runs `postbuild` to prepare `out/index.html`
+and its public assets. This is the static output recognized by Hostinger's
+Next.js deployment check. The Vinext/Worker output remains under `dist/`.
+Redeploy the latest `main` commit in hPanel. If an output directory is requested,
+use `out`. To build only the public static website, use `npm run build:hostinger`.
+
+This output serves the company homepage; it does not include the Cloudflare
+admin/API backend.
+
+## Shared/static hosting
+
 For Hostinger shared/static hosting connected to GitHub, deploy the repository
 into the domain's `public_html` directory. The root `index.html` serves the
 company website using the tracked files in `public/`. No Node build is required
