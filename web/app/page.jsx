@@ -10,11 +10,21 @@ import {
   Download,
 } from "lucide-react";
 import { publicData } from "../lib/public-data";
+import { mediaUrl } from "../lib/defaults";
 import { PublicShell } from "../components/public-shell";
 import { UpdateCard, EntryMedia, PublicEmpty } from "../components/content";
 export const dynamic = "force-dynamic";
+function initials(name) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
 export default async function Home() {
-  const { company, entries } = await publicData();
+  const { company, entries, leadership } = await publicData();
   const updates = entries.filter((e) => e.kind === "update").slice(0, 3);
   const media = entries.filter((e) => e.kind === "media").slice(0, 4);
   return (
@@ -146,10 +156,63 @@ export default async function Home() {
             ))}
           </div>
         </section>
+        {leadership.length > 0 && (
+          <section
+            className="public-section leadership-section"
+            id="leadership"
+          >
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">03 / LEADERSHIP</span>
+                <h2>
+                  People behind the
+                  <br />
+                  <em>purpose.</em>
+                </h2>
+              </div>
+              <p>
+                Meet the people entrusted with shaping Samuel Finance and
+                building a thoughtful, accountable way forward.
+              </p>
+            </div>
+            <div className="leadership-grid">
+              {leadership.map((leader, index) => {
+                const image = leader.media?.mime?.startsWith("image/");
+                return (
+                  <article
+                    className={`leader-card ${index === 0 ? "featured" : ""}`}
+                    key={leader.id}
+                  >
+                    <div className="leader-photo">
+                      {image ? (
+                        <img
+                          src={mediaUrl(leader.media_id)}
+                          alt={
+                            leader.media.alt_text ||
+                            `${leader.name}, ${leader.role}`
+                          }
+                          loading={index === 0 ? "eager" : "lazy"}
+                        />
+                      ) : (
+                        <span aria-hidden="true">{initials(leader.name)}</span>
+                      )}
+                    </div>
+                    <div className="leader-copy">
+                      <span className="eyebrow">LEADERSHIP</span>
+                      <h3>{leader.name}</h3>
+                      <strong>{leader.role}</strong>
+                      {leader.bio && <p>{leader.bio}</p>}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
         <section className="public-section news-section">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">03 / FROM SAMUEL FINANCE</span>
+              <span className="eyebrow">04 / FROM SAMUEL FINANCE</span>
               <h2>
                 News, perspectives
                 <br />& <em>company updates.</em>
@@ -234,7 +297,7 @@ export default async function Home() {
         </section>
         <section className="public-section contact-section" id="contact">
           <div>
-            <span className="eyebrow">04 / LET’S CONNECT</span>
+            <span className="eyebrow">05 / LET’S CONNECT</span>
             <h2>
               Every relationship
               <br />

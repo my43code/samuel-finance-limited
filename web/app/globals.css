@@ -2410,3 +2410,105 @@ em {
     scroll-behavior: auto !important;
   }
 }
+
+/* Leadership management */
+.leadership-manager {
+  min-width: 0;
+}
+.leadership-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.leadership-admin-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e3e8df;
+  border-radius: 7px;
+  background: #fff;
+}
+.leadership-admin-photo {
+  aspect-ratio: 1.25 / 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, #e7eee0, #c8d5c1);
+}
+.leadership-admin-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.leadership-admin-photo span {
+  color: #54715a;
+  font: 38px var(--serif);
+  letter-spacing: 1px;
+}
+.leadership-admin-copy {
+  padding: 18px 19px 20px;
+}
+.leadership-admin-copy h3 {
+  margin: 12px 0 4px;
+  color: var(--forest);
+  font: 25px/1.15 var(--serif);
+}
+.leadership-admin-copy > strong {
+  color: #9d8653;
+  font-size: 11px;
+  font-weight: 650;
+}
+.leadership-admin-copy > p {
+  min-height: 44px;
+  margin: 13px 0 0;
+  color: #7d887f;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.leadership-admin-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 17px;
+  padding-top: 13px;
+  border-top: 1px solid #eef1eb;
+}
+.leadership-admin-actions .text-button {
+  font-size: 11px;
+}
+.leadership-notice {
+  margin: 24px 0 0;
+}
+.leadership-editor .form-field > small {
+  line-height: 1.55;
+}
+.leadership-photo-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -3px 0 18px;
+  color: #70816f;
+  font-size: 11px;
+}
+.leadership-photo-preview img {
+  width: 72px;
+  height: 72px;
+  border-radius: 5px;
+  object-fit: cover;
+  object-position: center top;
+}
+.danger-text {
+  color: #9a5147;
+}
+
+@media (max-width: 1050px) {
+  .leadership-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .leadership-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}

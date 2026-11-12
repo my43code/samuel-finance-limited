@@ -29,6 +29,8 @@ and creates:
 - **cms_admins:** approved administrator membership.
 - **cms_company:** private draft and public company profiles.
 - **cms_entries:** updates, gallery posts, loan forms and vacancies.
+- **cms_leadership:** approved leadership profiles with backend-managed names,
+  roles, biographies and private profile photos.
 - **cms_media:** metadata for private uploads.
 - **cms_activity:** a database-generated change log.
 
@@ -73,16 +75,16 @@ secure flow uses a browser-specific verification cookie.
 Use a **Node.js application**, not a PHP/static Git deployment.
 Connect the GitHub repository's **main** branch and use:
 
-| Setting | Value |
-| --- | --- |
-| Framework | Next.js |
-| Node.js | 22.13 or newer |
-| Root | Repository root |
-| Install | npm ci |
-| Build | npm run build |
-| Start | npm start |
-| Output | Next.js default; .next/standalone if a custom field is mandatory |
-| Entry file, if requested | .next/standalone/server.js |
+| Setting                  | Value                                                            |
+| ------------------------ | ---------------------------------------------------------------- |
+| Framework                | Next.js                                                          |
+| Node.js                  | 22.13 or newer                                                   |
+| Root                     | Repository root                                                  |
+| Install                  | npm ci                                                           |
+| Build                    | npm run build                                                    |
+| Start                    | npm start                                                        |
+| Output                   | Next.js default; .next/standalone if a custom field is mandatory |
+| Entry file, if requested | .next/standalone/server.js                                       |
 
 Clear any previous **out** output override. The build produces a genuine Next.js
 standalone server and includes its public assets and static files. Automatic
@@ -123,6 +125,11 @@ administrator membership cannot grant dashboard access.
 ## Content workflow
 
 - **Company profile:** save a private draft, review, then publish.
+- **Leadership team:** upload a portrait in Media library, assign it to a
+  profile, then publish the name, role and biography from the Leadership team
+  workspace. Published profile photos are served from private Supabase Storage
+  through short-lived signed URLs; no team names or portraits are hard-coded
+  in the public Next.js page.
 - **Updates:** draft, publish, edit, archive or delete.
 - **Media:** upload privately, then attach to published content to share.
 - **Loan forms:** attach a PDF, add instructions and publish.

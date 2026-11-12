@@ -41,12 +41,14 @@ import {
   MoreHorizontal,
   CircleHelp,
   Copy,
+  UserRound,
 } from "lucide-react";
 import Brand from "./brand";
 import { companyDefaults, kinds, mediaUrl } from "../lib/defaults";
 const navigation = [
   ["overview", "Overview", LayoutDashboard],
   ["company", "Company profile", Building2],
+  ["leadership", "Leadership team", UserRound],
   ["update", "News & updates", Newspaper],
   ["media", "Media library", Images],
   ["document", "Loan forms", FileText],
@@ -64,6 +66,14 @@ const stamp = (v) =>
     : "Not yet published";
 const bytes = (v) =>
   v >= 1048576 ? `${(v / 1048576).toFixed(1)} MB` : `${Math.ceil(v / 1024)} KB`;
+const initials = (name) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 const blank = (kind) => ({
   kind,
   title: "",
@@ -75,6 +85,14 @@ const blank = (kind) => ({
   employment_type: "",
   closing_date: "",
   apply_email: "",
+});
+const blankLeader = () => ({
+  name: "",
+  role: "",
+  bio: "",
+  media_id: null,
+  status: "draft",
+  sort_order: 0,
 });
 export async function request(url, body, method = "POST") {
   const r = await fetch(url, {
@@ -179,6 +197,7 @@ export default function Dashboard({ user }) {
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all"),
     [editor, setEditor] = useState(null),
+    [leaderEditor, setLeaderEditor] = useState(null),
     [upload, setUpload] = useState(false),
     [review, setReview] = useState(false),
     [company, setCompany] = useState(companyDefaults),
@@ -265,6 +284,53 @@ export default function Dashboard({ user }) {
       setEditor(null);
       setError("");
     }
+  }
+  function openLeaderEditor(value = blankLeader()) {
+    setError("");
+    setLeaderEditor({
+      ...blankLeader(),
+      ...value,
+      bio: value.bio || "",
+      media_id: value.media_id || null,
+      sort_order: Number.isInteger(value.sort_order) ? value.sort_order : 0,
+    });
+  }
+  function closeLeaderEditor() {
+    if (busy) return;
+    if (confirm("Close the profile editor? Unsaved changes will be lost.")) {
+      setLeaderEditor(null);
+      setError("");
+    }
+  }
+  async function saveLeader(status) {
+    await run(async () => {
+      await request("/api/admin/leadership", {
+        ...leaderEditor,
+        status,
+        sort_order: Number(leaderEditor.sort_order) || 0,
+      });
+      setLeaderEditor(null);
+      await refresh();
+      setToast(
+        status === "published"
+          ? "Leadership profile published to your website."
+          : status === "archived"
+            ? "Leadership profile archived."
+            : "Leadership profile saved as a draft.",
+      );
+    });
+  }
+  async function removeLeader(leader) {
+    if (!confirm(`Remove “${leader.name}” from the leadership team?`)) return;
+    await run(async () => {
+      await request(
+        "/api/admin/leadership",
+        { id: leader.id, revision: leader.revision },
+        "DELETE",
+      );
+      await refresh();
+      setToast("Leadership profile removed.");
+    });
   }
   async function saveEntry(status) {
     if (
@@ -357,6 +423,7 @@ export default function Dashboard({ user }) {
   }
   const entries = data?.entries || [],
     media = data?.media || [],
+    leadership = data?.leadership || [],
     activity = data?.activity || [];
   const list = entries.filter(
     (e) =>
@@ -399,10 +466,10 @@ export default function Dashboard({ user }) {
         </div>
         <span className="sidebar-section-label">YOUR WORKSPACE</span>
         <nav aria-label="Administration">
-          {navigation.map(([id, label, Icon], i) => (
+          {navigation.map(([id, label, Icon]) => (
             <button
               key={id}
-              className={`${tab === id ? "active" : ""} ${i === 6 ? "nav-divider" : ""}`}
+              className={`${tab === id ? "active" : ""} ${id === "activity" ? "nav-divider" : ""}`}
               onClick={() => navigate(id)}
             >
               <Icon size={18} />
@@ -503,10 +570,12 @@ export default function Dashboard({ user }) {
                       "A clear view of your content, resources and company communications.",
                     company:
                       "Keep your company story and contact details accurate and current.",
+                    leadership:
+                      "Manage the names, roles, biographies and profile photos shown on your public website.",
                     update:
                       "Share company announcements, perspectives and developments.",
                     media:
-                      "Your images, short videos and documents, organised in one place.",
+                      "Your images, profile photos, short videos and documents, organised in one place.",
                     document:
                       "Manage the PDF forms and application instructions available to visitors.",
                     vacancy:
@@ -553,6 +622,15 @@ export default function Dashboard({ user }) {
                 >
                   <Upload size={16} />
                   Upload files
+                </button>
+              ) : tab === "leadership" ? (
+                <button
+                  className="button forest"
+                  disabled={!data || busy}
+                  onClick={() => openLeaderEditor()}
+                >
+                  <Plus size={17} />
+                  Add profile
                 </button>
               ) : null}
             </div>
@@ -725,6 +803,87 @@ export default function Dashboard({ user }) {
                     <ActivityList items={activity.slice(0, 4)} />
                   </section>
                 </>
+              )}
+              {tab === "leadership" && (
+                <section className="cms-card leadership-manager">
+                  <div className="card-top">
+                    <div>
+                      <h2>People behind the purpose.</h2>
+                      <p>
+                        Every name, role and profile image on the public site is
+                        managed here and stored in Supabase.
+                      </p>
+                    </div>
+                    <span className="editor-state">
+                      {
+                        leadership.filter(
+                          (leader) => leader.status === "published",
+                        ).length
+                      }{" "}
+                      published
+                    </span>
+                  </div>
+                  {leadership.length ? (
+                    <div className="leadership-admin-grid">
+                      {leadership.map((leader) => (
+                        <article
+                          className="leadership-admin-card"
+                          key={leader.id}
+                        >
+                          <div className="leadership-admin-photo">
+                            {leader.media?.mime?.startsWith("image/") ? (
+                              <img
+                                src={mediaUrl(leader.media_id)}
+                                alt={leader.media.alt_text || leader.name}
+                              />
+                            ) : (
+                              <span>{initials(leader.name)}</span>
+                            )}
+                          </div>
+                          <div className="leadership-admin-copy">
+                            <Status value={leader.status} />
+                            <h3>{leader.name}</h3>
+                            <strong>{leader.role}</strong>
+                            {leader.bio && <p>{leader.bio}</p>}
+                            <div className="leadership-admin-actions">
+                              <button
+                                className="text-button"
+                                disabled={busy}
+                                onClick={() => openLeaderEditor(leader)}
+                              >
+                                <Pencil size={14} /> Edit
+                              </button>
+                              <button
+                                className="icon-button danger-hover"
+                                disabled={busy}
+                                aria-label={`Delete ${leader.name}`}
+                                onClick={() => removeLeader(leader)}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <Empty
+                      icon={UserRound}
+                      title="Build your leadership page."
+                      description="Add a profile and publish it when the name, role and photo are ready."
+                      action="Add a profile"
+                      onAction={() => openLeaderEditor()}
+                    />
+                  )}
+                  <div className="notice-box leadership-notice">
+                    <LockKeyhole size={18} />
+                    <p>
+                      Profile photos are private until the corresponding
+                      leadership profile is published. Upload a portrait in the
+                      media library, then select it here.
+                    </p>
+                  </div>
+                </section>
               )}
               {["update", "document", "vacancy"].includes(tab) && (
                 <section className="cms-card">
@@ -1492,6 +1651,141 @@ export default function Dashboard({ user }) {
           </form>
         </Modal>
       )}
+      {leaderEditor && (
+        <Modal
+          title={
+            leaderEditor.id
+              ? "Edit leadership profile."
+              : "Add a leadership profile."
+          }
+          kicker="LEADERSHIP / PROFILE"
+          wide
+          onClose={closeLeaderEditor}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveLeader("published");
+            }}
+          >
+            <div className="dialog-body leadership-editor">
+              {error && (
+                <div className="feedback error" role="alert">
+                  <AlertCircle size={17} />
+                  {error}
+                </div>
+              )}
+              <div className="form-two">
+                <Field
+                  label="Full name"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  value={leaderEditor.name}
+                  onChange={(value) =>
+                    setLeaderEditor({ ...leaderEditor, name: value })
+                  }
+                />
+                <Field
+                  label="Role / title"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  value={leaderEditor.role}
+                  onChange={(value) =>
+                    setLeaderEditor({ ...leaderEditor, role: value })
+                  }
+                />
+              </div>
+              <div className="form-two">
+                <label className="form-field">
+                  Profile photo
+                  <select
+                    value={leaderEditor.media_id || ""}
+                    onChange={(e) =>
+                      setLeaderEditor({
+                        ...leaderEditor,
+                        media_id: e.target.value || null,
+                      })
+                    }
+                  >
+                    <option value="">No photo — use initials</option>
+                    {media
+                      .filter((file) => file.mime.startsWith("image/"))
+                      .map((file) => (
+                        <option value={file.id} key={file.id}>
+                          {file.name}
+                        </option>
+                      ))}
+                  </select>
+                  <small>
+                    Upload a portrait in Media library first. Images are kept
+                    private until this profile is published.
+                  </small>
+                </label>
+                <Field
+                  label="Display order"
+                  type="number"
+                  min={0}
+                  max={999}
+                  value={leaderEditor.sort_order}
+                  onChange={(value) =>
+                    setLeaderEditor({ ...leaderEditor, sort_order: value })
+                  }
+                />
+              </div>
+              {leaderEditor.media_id && (
+                <div className="leadership-photo-preview">
+                  <img
+                    src={mediaUrl(leaderEditor.media_id)}
+                    alt="Selected leadership profile preview"
+                  />
+                  <span>Selected profile photo</span>
+                </div>
+              )}
+              <Field
+                label="Biography"
+                type="textarea"
+                maxLength={1200}
+                value={leaderEditor.bio}
+                onChange={(value) =>
+                  setLeaderEditor({ ...leaderEditor, bio: value })
+                }
+                hint="Keep this concise and factual. It appears below the role on the public website."
+              />
+            </div>
+            <div className="dialog-actions">
+              {leaderEditor.id && leaderEditor.status !== "archived" && (
+                <button
+                  type="button"
+                  className="text-button danger-text"
+                  disabled={busy}
+                  onClick={() => saveLeader("archived")}
+                >
+                  Archive profile
+                </button>
+              )}
+              <span />
+              <button
+                type="button"
+                className="text-button"
+                disabled={busy}
+                onClick={() => saveLeader("draft")}
+              >
+                Save draft
+              </button>
+              <button type="submit" className="button forest" disabled={busy}>
+                {busy ? (
+                  <LoaderCircle className="spin" size={16} />
+                ) : (
+                  <Check size={16} />
+                )}
+                Publish profile
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
       {upload && (
         <Modal
           title="Add to your library."
@@ -1558,8 +1852,8 @@ export default function Dashboard({ user }) {
                 <LockKeyhole size={18} />
                 <p>
                   Your file stays private until it is attached to a published
-                  update, gallery post or loan form. Images: 10 MB. PDFs: 15 MB.
-                  Videos: 50 MB.
+                  update, gallery post, loan form or leadership profile. Images:
+                  10 MB. PDFs: 15 MB. Videos: 50 MB.
                 </p>
               </div>
             </div>

@@ -87,6 +87,24 @@ export const companySchema = z.object({
   address: clean(3, 500, "Office location"),
   hours: clean(5, 300, "Contact hours"),
 });
+export const leadershipSchema = z
+  .object({
+    id: z.uuid().optional(),
+    revision: z.number().int().nonnegative().optional(),
+    name: clean(2, 120, "Name"),
+    role: clean(2, 120, "Role"),
+    bio: clean(0, 1200, "Biography"),
+    media_id: z.uuid().nullable(),
+    status: z.enum(["draft", "published", "archived"]),
+    sort_order: z.number().int().min(0).max(999),
+  })
+  .superRefine((v, ctx) => {
+    if (v.id && v.revision === undefined)
+      ctx.addIssue({
+        code: "custom",
+        message: "Refresh this profile before saving.",
+      });
+  });
 export function detectedMime(bytes) {
   if (
     bytes.length >= 8 &&

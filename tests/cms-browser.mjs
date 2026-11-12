@@ -13,6 +13,7 @@ const visitorId = "22222222-2222-4222-8222-222222222222";
 const state = {
   entries: [],
   media: [],
+  leadership: [],
   activity: [],
   company: ["draft", "published"].map((id) => ({
     id,
@@ -152,11 +153,18 @@ const mock = http.createServer(async (req, res) => {
       if (!admin && table === "cms_entries")
         allowed = rows.filter((r) => r.status === "published");
       if (!admin && table === "cms_media")
-        allowed = rows.filter((r) =>
-          state.entries.some(
-            (e) => e.media_id === r.id && e.status === "published",
-          ),
+        allowed = rows.filter(
+          (r) =>
+            state.entries.some(
+              (e) => e.media_id === r.id && e.status === "published",
+            ) ||
+            state.leadership.some(
+              (leader) =>
+                leader.media_id === r.id && leader.status === "published",
+            ),
         );
+      if (!admin && table === "cms_leadership")
+        allowed = rows.filter((r) => r.status === "published");
       if (!admin && table === "cms_company")
         allowed = rows.filter((r) => r.id === "published");
       if (!admin && table === "cms_activity") allowed = [];

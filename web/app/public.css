@@ -1,6 +1,109 @@
 .public-site {
   background: #fff;
 }
+
+/* Leadership profiles are rendered from the published Supabase records. */
+.leadership-section {
+  background: #fbfcf8;
+  padding-top: 82px;
+  padding-bottom: 92px;
+}
+.leadership-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.leader-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e4e9dd;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.leader-card.featured {
+  grid-column: span 2;
+  grid-template-columns: minmax(190px, 42%) 1fr;
+  grid-template-rows: 1fr;
+}
+.leader-photo {
+  aspect-ratio: 1 / 1.06;
+  background: linear-gradient(145deg, #e7eee0, #c8d5c1);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.leader-card.featured .leader-photo {
+  aspect-ratio: auto;
+  min-height: 280px;
+}
+.leader-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.leader-photo > span {
+  color: #54715a;
+  font: 44px var(--serif);
+  letter-spacing: 1px;
+}
+.leader-copy {
+  padding: 27px 28px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.leader-copy .eyebrow {
+  font-size: 7px;
+  letter-spacing: 1.25px;
+  color: #a5ae91;
+  margin-bottom: 14px;
+}
+.leader-copy h3 {
+  color: #58734f;
+  font: 31px/1.1 var(--serif);
+  letter-spacing: -0.3px;
+  margin: 0 0 7px;
+}
+.leader-copy strong {
+  color: #a28a55;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.35px;
+}
+.leader-copy p {
+  color: #9aa78b;
+  font-size: 11px;
+  line-height: 1.9;
+  margin: 21px 0 0;
+}
+
+@media (max-width: 900px) {
+  .leadership-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .leader-card.featured {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .leadership-grid {
+    grid-template-columns: 1fr;
+  }
+  .leader-card.featured {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .leader-card.featured .leader-photo {
+    min-height: 0;
+    aspect-ratio: 1.35 / 1;
+  }
+  .leader-copy {
+    padding: 24px 22px 26px;
+  }
+}
 .public-utility {
   display: flex;
   align-items: center;

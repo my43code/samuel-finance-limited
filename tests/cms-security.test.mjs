@@ -14,10 +14,29 @@ import { validateConfiguration } from "../web/lib/config.js";
 test("configuration refuses service-role keys that would bypass database policies", () => {
   assert.equal(validateConfiguration("", "key"), null);
   assert.equal(validateConfiguration("not-a-url", "key"), null);
-  assert.equal(validateConfiguration("https://project.supabase.co", "sb_secret_fixture_only"), null);
-  const elevated = "fixture." + Buffer.from(JSON.stringify({role:"service_role"})).toString("base64url") + ".fixture";
-  assert.equal(validateConfiguration("https://project.supabase.co", elevated), null);
-  assert.ok(validateConfiguration("https://project.supabase.co", "sb_publishable_fixture_only"));
+  assert.equal(
+    validateConfiguration(
+      "https://project.supabase.co",
+      "sb_secret_fixture_only",
+    ),
+    null,
+  );
+  const elevated =
+    "fixture." +
+    Buffer.from(JSON.stringify({ role: "service_role" })).toString(
+      "base64url",
+    ) +
+    ".fixture";
+  assert.equal(
+    validateConfiguration("https://project.supabase.co", elevated),
+    null,
+  );
+  assert.ok(
+    validateConfiguration(
+      "https://project.supabase.co",
+      "sb_publishable_fixture_only",
+    ),
+  );
 });
 
 test("validation rejects unsafe files and incomplete published content", () => {
@@ -118,20 +137,23 @@ test("Postgres RLS protects membership, drafts, files and activity", async () =>
       "visitor@example.test",
     ]);
     await db.exec(
-      await readFile(
-        new URL(
-          "../supabase/migrations/20261112000100_cms.sql",
-          import.meta.url,
-        ),
-        "utf8",
-      ),
+      (
+        await Promise.all(
+          [
+            "../supabase/migrations/20261112000100_cms.sql",
+            "../supabase/migrations/20261112000200_leadership.sql",
+          ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
+        )
+      ).join("\n"),
     );
     await db.query(
       "insert into public.cms_admins(user_id,display_name,role) values ($1,$2,$3)",
       [admin, "Administrator", "owner"],
     );
     // Existing project-wide policies must not weaken this bucket's boundary.
-    await db.exec("grant update on storage.objects to anon,authenticated; create policy broad_legacy_storage_policy on storage.objects for all to anon,authenticated using(true) with check(true)");
+    await db.exec(
+      "grant update on storage.objects to anon,authenticated; create policy broad_legacy_storage_policy on storage.objects for all to anon,authenticated using(true) with check(true)",
+    );
     async function role(name, uid = "") {
       await db.exec("reset role");
       await db.query("select set_config('request.jwt.claim.sub', $1, false)", [
@@ -140,7 +162,11 @@ test("Postgres RLS protects membership, drafts, files and activity", async () =>
       await db.exec("set role " + name);
     }
     await role("anon");
-    await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values ('company-media','anonymous/file.png')"));
+    await assert.rejects(
+      db.query(
+        "insert into storage.objects(bucket_id,name) values ('company-media','anonymous/file.png')",
+      ),
+    );
     assert.deepEqual(
       (await db.query("select * from public.cms_company")).rows.map(
         (r) => r.id,

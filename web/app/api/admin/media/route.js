@@ -72,13 +72,14 @@ export async function DELETE(request) {
   try {
     const { client } = await requireAdmin(request);
     const { id } = z.object({ id: z.uuid() }).parse(await jsonBody(request));
-    const linked = checked(
-      await client.from("cms_entries").select("id").eq("media_id", id).limit(1),
-    );
-    if (linked.length)
+    const [linked, leadership] = await Promise.all([
+      client.from("cms_entries").select("id").eq("media_id", id).limit(1),
+      client.from("cms_leadership").select("id").eq("media_id", id).limit(1),
+    ]);
+    if (checked(linked).length || checked(leadership).length)
       throw new RequestError(
         409,
-        "This file is attached to content. Remove that attachment before deleting the file.",
+        "This file is attached to published content or a leadership profile. Remove that attachment before deleting the file.",
       );
     const media = checked(
       await client.from("cms_media").select("path").eq("id", id).single(),
