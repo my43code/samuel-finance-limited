@@ -12,6 +12,7 @@ import {
 import { publicData } from "../lib/public-data";
 import { mediaUrl } from "../lib/defaults";
 import { PublicShell } from "../components/public-shell";
+import FacebookIcon from "../components/facebook-icon";
 import { UpdateCard, EntryMedia, PublicEmpty } from "../components/content";
 export const dynamic = "force-dynamic";
 function initials(name) {
@@ -344,6 +345,13 @@ export default async function Home() {
                 rel="noopener noreferrer"
               >
                 Continue the conversation on WhatsApp <ArrowUpRight size={16} />
+              </a>
+            )}
+            {company.facebook && (
+              <a href={company.facebook} target="_blank" rel="noopener noreferrer">
+                <FacebookIcon size={22} />
+                <span><small>FACEBOOK</small>Follow Samuel Finance Limited</span>
+                <ArrowUpRight size={20} />
               </a>
             )}
           </div>

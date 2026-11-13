@@ -1,4 +1,5 @@
 import { ArrowUpRight, Mail, Phone, LockKeyhole, MapPin } from "lucide-react";
+import FacebookIcon from "./facebook-icon";
 import Brand from "./brand";
 import ContactPopover from "./contact-popover";
 export function PublicHeader() {
@@ -72,6 +73,12 @@ export function PublicFooter({ company }) {
             <MapPin size={15} />
             {company.address}
           </span>
+          {company.facebook && (
+            <a href={company.facebook} target="_blank" rel="noopener noreferrer">
+              <FacebookIcon size={15} />
+              Follow us on Facebook <ArrowUpRight size={13} />
+            </a>
+          )}
         </div>
       </div>
       <div className="footer-legal">

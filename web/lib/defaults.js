@@ -10,6 +10,7 @@ export const companyDefaults = {
   email: "enquiries@samuelfinancelimited.com",
   phone: "+675 7417 5335",
   whatsapp: "+61 459 477 606",
+  facebook: "https://www.facebook.com/share/1GpH6Xqazr/",
   address: "Papua New Guinea",
   hours: "Contact our team to arrange a conversation.",
 };

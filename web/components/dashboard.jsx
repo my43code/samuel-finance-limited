@@ -1182,6 +1182,7 @@ export default function Dashboard({ user }) {
                             ["email", "Contact email", "email"],
                             ["phone", "Phone number", "tel"],
                             ["whatsapp", "WhatsApp number", "tel"],
+                            ["facebook", "Facebook page link", "url"],
                             ["address", "Office / location", "text"],
                           ].map(([key, label, type]) => (
                             <Field
@@ -1193,8 +1194,8 @@ export default function Dashboard({ user }) {
                                 setCompany({ ...company, [key]: v });
                                 setCompanyDirty(true);
                               }}
-                              required={key !== "whatsapp"}
-                              maxLength={key === "address" ? 500 : 254}
+                              required={!["whatsapp", "facebook"].includes(key)}
+                              maxLength={["address", "facebook"].includes(key) ? 500 : 254}
                             />
                           ))}
                         </div>
@@ -1913,6 +1914,7 @@ export default function Dashboard({ user }) {
                         email: "Email",
                         phone: "Phone",
                         whatsapp: "WhatsApp",
+                        facebook: "Facebook page",
                         address: "Location",
                         hours: "Contact hours",
                       }[key]

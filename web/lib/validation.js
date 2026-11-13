@@ -85,6 +85,15 @@ export const companySchema = z.object({
       "Enter a valid WhatsApp number.",
     ),
   address: clean(3, 500, "Office location"),
+  facebook: z.string().trim().max(500).refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" &&
+        ["facebook.com", "www.facebook.com", "m.facebook.com"].includes(url.hostname) &&
+        !url.username && !url.password;
+    } catch { return false; }
+  }, "Enter a valid HTTPS Facebook link, or leave blank to hide it.").default("https://www.facebook.com/share/1GpH6Xqazr/"),
   hours: clean(5, 300, "Contact hours"),
 });
 export const leadershipSchema = z

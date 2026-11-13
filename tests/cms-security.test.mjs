@@ -76,6 +76,10 @@ test("validation rejects unsafe files and incomplete published content", () => {
     false,
   );
   assert.equal(companySchema.safeParse(companyDefaults).success, true);
+  assert.equal(companySchema.safeParse({ ...companyDefaults, facebook: "" }).success, true);
+  for (const facebook of ["javascript:alert(1)", "https://facebook.com.evil.test/page", "https://example.test", "http://facebook.com/page", "https://user:pass@facebook.com/page"]) {
+    assert.equal(companySchema.safeParse({ ...companyDefaults, facebook }).success, false);
+  }
   assert.equal(
     companySchema.safeParse({
       ...companyDefaults,
