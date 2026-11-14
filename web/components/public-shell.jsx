@@ -2,6 +2,7 @@ import { ArrowUpRight, Mail, Phone, LockKeyhole, MapPin } from "lucide-react";
 import FacebookIcon from "./facebook-icon";
 import Brand from "./brand";
 import ContactPopover from "./contact-popover";
+import PublicExperience from "./public-experience";
 export function PublicHeader() {
   return (
     <>
@@ -106,6 +107,7 @@ export function PublicShell({ children, company }) {
       {children}
       <PublicFooter company={company} />
       <ContactPopover phone={company.phone} whatsapp={company.whatsapp} />
+      <PublicExperience />
     </div>
   );
 }

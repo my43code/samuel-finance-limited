@@ -7,6 +7,7 @@ import {
   Play,
 } from "lucide-react";
 import { mediaUrl } from "../lib/defaults";
+import ShareButton from "./share-button";
 export function dateLabel(value) {
   return value
     ? new Date(value).toLocaleDateString("en-AU", {
@@ -64,9 +65,9 @@ export function UpdateCard({ entry }) {
           <a href={`/updates/${entry.id}`}>{entry.title}</a>
         </h3>
         <p>{entry.summary}</p>
-        <a className="text-link" href={`/updates/${entry.id}`}>
+        <div className="content-card-actions"><a className="text-link" href={`/updates/${entry.id}`}>
           Read the update <ArrowUpRight size={16} />
-        </a>
+        </a><ShareButton title={entry.title} path={`/updates/${entry.id}`} description={entry.summary} /></div>
       </div>
     </article>
   );
@@ -111,22 +112,25 @@ export function JobCard({ entry }) {
 }
 export function DocumentCard({ entry }) {
   return (
-    <article className="document-card">
+    <article className="document-card" id={`resource-${entry.id}`}>
       <span className="document-icon">
         <FileText size={27} />
       </span>
       <div>
-        <span className="eyebrow">PDF DOWNLOAD</span>
-        <h3>{entry.title}</h3>
+        <span className="eyebrow">PDF RESOURCE · {dateLabel(entry.published_at)}</span>
+        <h3><a href={`/loans/${entry.id}`}>{entry.title}</a></h3>
         {entry.summary && <p>{entry.summary}</p>}
-        {entry.body && <p>{entry.body}</p>}
+        <a className="resource-detail-link" href={`/loans/${entry.id}`}>View details & instructions <ArrowUpRight size={13} /></a>
       </div>
+      <div className="document-actions">
       <a
         className="button outline"
         href={`${mediaUrl(entry.media_id)}?download=1`}
       >
         Download form <Download size={15} />
       </a>
+      <ShareButton title={entry.title} path={`/loans/${entry.id}`} description={entry.summary} label="Share resource" />
+      </div>
     </article>
   );
 }

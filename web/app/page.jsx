@@ -14,6 +14,7 @@ import { mediaUrl } from "../lib/defaults";
 import { PublicShell } from "../components/public-shell";
 import FacebookIcon from "../components/facebook-icon";
 import { UpdateCard, EntryMedia, PublicEmpty } from "../components/content";
+import ShareButton from "../components/share-button";
 export const dynamic = "force-dynamic";
 function initials(name) {
   return name
@@ -89,6 +90,12 @@ export default async function Home() {
             <Compass size={19} /> Purposeful decisions
           </strong>
         </div>
+        {updates[0] && <div className="latest-announcement"><span><i /> LATEST FROM SAMUEL FINANCE</span><a href={`/updates/${updates[0].id}`}>{updates[0].title}<ArrowUpRight size={17} /></a><a className="announcement-all" href="/updates">All updates <ArrowUpRight size={14} /></a></div>}
+        <section className="corporate-shortcuts" aria-label="Explore Samuel Finance">
+          <a href="#company"><span>01 / WHO WE ARE</span><strong>A foundation of trust.</strong><p>Our purpose, principles and approach to finance.</p><ArrowUpRight size={22} /></a>
+          <a href="/updates"><span>02 / STAY INFORMED</span><strong>Our latest thinking.</strong><p>Company developments, news and perspectives.</p><ArrowUpRight size={22} /></a>
+          <a href="/loans"><span>03 / TAKE THE NEXT STEP</span><strong>Information within reach.</strong><p>Published forms and resources, ready to share.</p><ArrowUpRight size={22} /></a>
+        </section>
         <section className="public-section company-section" id="company">
           <div>
             <span className="eyebrow">01 / OUR COMPANY</span>
@@ -219,9 +226,9 @@ export default async function Home() {
                 <br />& <em>company updates.</em>
               </h2>
             </div>
-            <a className="text-link" href="/updates">
+            <div className="section-heading-actions"><a className="text-link" href="/updates">
               All updates <ArrowUpRight size={17} />
-            </a>
+            </a><ShareButton title="Samuel Finance news & updates" path="/updates" label="Share news" /></div>
           </div>
           {updates.length ? (
             <div className="updates-grid">
@@ -274,6 +281,7 @@ export default async function Home() {
             <a className="button gold" href="/loans">
               Forms & resources <Download size={16} />
             </a>
+            <ShareButton title="Samuel Finance forms & resources" path="/loans" label="Share resources" className="share-on-dark" />
           </div>
           <div className="resources-lines">
             <a href="/loans">
