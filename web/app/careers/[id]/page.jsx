@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const job = await publicEntry(id, "vacancy");
-  return { title: job?.title || "Vacancy not found" };
+  if (!job) return { title: "Vacancy not found", robots: { index: false } };
+  return { title: job.title, description: job.summary, alternates: { canonical: `/careers/${id}` }, openGraph: { title: job.title, description: job.summary, url: `/careers/${id}`, images: ["/assets/mountains.jpg"] } };
 }
 export default async function Job({ params }) {
   const { id } = await params;

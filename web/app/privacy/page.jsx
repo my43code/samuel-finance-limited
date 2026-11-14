@@ -1,6 +1,6 @@
 import { publicData } from "../../lib/public-data";
 import { PublicShell } from "../../components/public-shell";
-export const metadata = { title: "Website privacy" };
+export const metadata = { title: "Website privacy", description: "How the Samuel Finance Limited website handles public browsing, contact links, administrator access and published resources.", alternates: { canonical: "/privacy" } };
 export const dynamic = "force-dynamic";
 export default async function Privacy() {
   const { company } = await publicData();

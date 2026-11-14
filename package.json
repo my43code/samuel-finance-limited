@@ -6,7 +6,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "test": "node --test tests/cms-security.test.mjs",
+    "test": "node --test tests/cms-security.test.mjs tests/seo-discovery.test.mjs",
     "test:browser": "node tests/cms-browser.mjs",
     "install:ci": "node scripts/install-ci.mjs",
     "dev": "node scripts/dev-hostinger.mjs",

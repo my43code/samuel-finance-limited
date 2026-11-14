@@ -8,14 +8,25 @@ import {
   Phone,
   MapPin,
   Download,
+  FileText,
+  BookOpen,
 } from "lucide-react";
 import { publicData } from "../lib/public-data";
 import { mediaUrl } from "../lib/defaults";
 import { PublicShell } from "../components/public-shell";
 import FacebookIcon from "../components/facebook-icon";
-import { UpdateCard, EntryMedia, PublicEmpty } from "../components/content";
+import { UpdateCard, EntryMedia, PublicEmpty, dateLabel } from "../components/content";
 import ShareButton from "../components/share-button";
+import HomeCarousel from "../components/home-carousel";
+import { GettingStarted, FinanceFaq } from "../components/finance-information";
+import { guides } from "../lib/guides";
 export const dynamic = "force-dynamic";
+export const metadata = {
+  title: { absolute: "Samuel Finance Limited | Finance information in Papua New Guinea" },
+  description: "Get to know Samuel Finance Limited. Explore finance guides, published application forms, company news and careers in Papua New Guinea, and speak with our team.",
+  alternates: { canonical: "/" },
+  openGraph: { title: "Samuel Finance Limited", description: "A considered approach to finance in Papua New Guinea. Company information, helpful guides and published resources.", url: "/", images: ["/assets/mountains.jpg"] },
+};
 function initials(name) {
   return name
     .split(/\s+/)
@@ -27,11 +38,20 @@ function initials(name) {
 }
 export default async function Home() {
   const { company, entries, leadership } = await publicData();
-  const updates = entries.filter((e) => e.kind === "update").slice(0, 3);
+  const updates = entries.filter((e) => e.kind === "update").slice(0, 9);
+  const resources = entries.filter((e) => e.kind === "document" && e.media_id).slice(0, 7);
   const media = entries.filter((e) => e.kind === "media").slice(0, 4);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Organization", "@id": "https://samuelfinancelimited.com/#organization", name: company.name, url: "https://samuelfinancelimited.com", logo: "https://samuelfinancelimited.com/assets/logo.png", description: company.introduction, email: company.email, telephone: company.phone, ...(company.facebook ? { sameAs: [company.facebook] } : {}) },
+      { "@type": "WebSite", "@id": "https://samuelfinancelimited.com/#website", url: "https://samuelfinancelimited.com", name: company.name, inLanguage: "en", publisher: { "@id": "https://samuelfinancelimited.com/#organization" } },
+    ],
+  };
   return (
     <PublicShell company={company}>
       <main id="main">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
         <section className="home-hero">
           <div className="hero-copy">
             <span className="eyebrow">
@@ -48,8 +68,8 @@ export default async function Home() {
               <a className="button forest" href="#company">
                 Discover Samuel Finance <ArrowUpRight size={17} />
               </a>
-              <a className="text-link" href="/loans">
-                Application resources <ArrowUpRight size={15} />
+              <a className="text-link" href="#getting-started">
+                Plan your next step <ArrowUpRight size={15} />
               </a>
             </div>
             <div className="hero-note">
@@ -93,7 +113,7 @@ export default async function Home() {
         {updates[0] && <div className="latest-announcement"><span><i /> LATEST FROM SAMUEL FINANCE</span><a href={`/updates/${updates[0].id}`}>{updates[0].title}<ArrowUpRight size={17} /></a><a className="announcement-all" href="/updates">All updates <ArrowUpRight size={14} /></a></div>}
         <section className="corporate-shortcuts" aria-label="Explore Samuel Finance">
           <a href="#company"><span>01 / WHO WE ARE</span><strong>A foundation of trust.</strong><p>Our purpose, principles and approach to finance.</p><ArrowUpRight size={22} /></a>
-          <a href="/updates"><span>02 / STAY INFORMED</span><strong>Our latest thinking.</strong><p>Company developments, news and perspectives.</p><ArrowUpRight size={22} /></a>
+          <a href="#getting-started"><span>02 / GET PREPARED</span><strong>Clarity before commitment.</strong><p>Useful guides, practical questions and a preparation checklist.</p><ArrowUpRight size={22} /></a>
           <a href="/loans"><span>03 / TAKE THE NEXT STEP</span><strong>Information within reach.</strong><p>Published forms and resources, ready to share.</p><ArrowUpRight size={22} /></a>
         </section>
         <section className="public-section company-section" id="company">
@@ -164,6 +184,7 @@ export default async function Home() {
             ))}
           </div>
         </section>
+        <GettingStarted email={company.email} />
         {leadership.length > 0 && (
           <section
             className="public-section leadership-section"
@@ -231,17 +252,27 @@ export default async function Home() {
             </a><ShareButton title="Samuel Finance news & updates" path="/updates" label="Share news" /></div>
           </div>
           {updates.length ? (
-            <div className="updates-grid">
+            <HomeCarousel id="homepage-news" label="Latest news and updates">
               {updates.map((e) => (
                 <UpdateCard key={e.id} entry={e} />
               ))}
-            </div>
+            </HomeCarousel>
           ) : (
             <PublicEmpty title="Our next chapter, shared here.">
               Company announcements and perspectives will appear here as they
               are published. Contact our team for current information.
             </PublicEmpty>
           )}
+        </section>
+        <section className="public-section home-resources-section" id="resources">
+          <div className="section-heading"><div><span className="eyebrow">EXPLORE. PREPARE. MOVE FORWARD.</span><h2>Useful resources.<br /><em>Within easy reach.</em></h2></div><div className="section-heading-actions"><a className="text-link" href="/loans">All forms & resources <ArrowUpRight size={17} /></a><ShareButton title="Samuel Finance forms & resources" path="/loans" label="Share resources" /></div></div>
+          <p className="home-resources-intro">Browse published forms and plain-English guides. Swipe to explore, or use the arrows to find your next step.</p>
+          <HomeCarousel id="homepage-resources" label="Forms, resources and finance guides" variant="resources">
+            {resources.map(entry => <article className="home-resource-card" key={entry.id}><div className="resource-card-top"><span><FileText size={27} /></span><span className="eyebrow">PUBLISHED PDF</span></div><span className="resource-card-type">{dateLabel(entry.published_at)}</span><h3><a href={`/loans/${entry.id}`}>{entry.title}</a></h3><p>{entry.summary || "Read the instructions and download the current published document."}</p><a className="text-link" href={`/loans/${entry.id}`}>View resource <ArrowUpRight size={16} /></a><div className="resource-card-actions"><a href={`${mediaUrl(entry.media_id)}?download=1`} className="resource-download"><Download size={15} /> Download PDF</a><ShareButton title={entry.title} path={`/loans/${entry.id}`} description={entry.summary} /></div></article>)}
+            {guides.map(guide => <article className="home-resource-card guide-resource-card" key={guide.slug}><div className="resource-card-top"><span><BookOpen size={27} /></span><span className="eyebrow">FINANCE GUIDE</span></div><span className="resource-card-type">{guide.readTime}</span><h3><a href={`/guides/${guide.slug}`}>{guide.title}</a></h3><p>{guide.summary}</p><a className="text-link" href={`/guides/${guide.slug}`}>Read the guide <ArrowUpRight size={16} /></a><div className="resource-card-actions"><span className="resource-guide-note">A more informed next step</span><ShareButton title={guide.title} path={`/guides/${guide.slug}`} description={guide.summary} /></div></article>)}
+            <article className="home-resource-card guide-resource-card" key="preparation-tool"><div className="resource-card-top"><span><ShieldCheck size={27} /></span><span className="eyebrow">INTERACTIVE CHECKLIST</span></div><span className="resource-card-type">Four prompts to consider</span><h3><a href="#getting-started">Ready for a conversation?</a></h3><p>Work through the key questions about your purpose, budget, costs and next steps. No personal details needed.</p><a className="text-link" href="#getting-started">Explore the checklist <ArrowUpRight size={16} /></a><div className="resource-card-actions"><span className="resource-guide-note">Prepare at your own pace</span><ShareButton title="Prepare for a finance conversation" path="/#getting-started" /></div></article>
+            <article className="home-resource-card" key="forms-library"><div className="resource-card-top"><span><FileText size={27} /></span><span className="eyebrow">RESOURCE LIBRARY</span></div><span className="resource-card-type">Published by our team</span><h3><a href="/loans">Find the right form.</a></h3><p>Browse the latest published documents, search for a resource and read the instructions before downloading.</p><a className="text-link" href="/loans">Browse all resources <ArrowUpRight size={16} /></a><div className="resource-card-actions"><span className="resource-guide-note">Current published versions</span><ShareButton title="Samuel Finance forms & resources" path="/loans" /></div></article>
+          </HomeCarousel>
         </section>
         {media.length > 0 && (
           <section className="public-section gallery-section">
@@ -290,9 +321,9 @@ export default async function Home() {
               </span>
               <ArrowUpRight size={24} />
             </a>
-            <a href="/careers">
+            <a href="/guides/borrowing-basics">
               <span>
-                <small>02 / OPPORTUNITIES</small>Build your career with us
+                <small>02 / UNDERSTANDING FINANCE</small>Borrowing basics, explained
               </span>
               <ArrowUpRight size={24} />
             </a>
@@ -304,6 +335,7 @@ export default async function Home() {
             </a>
           </div>
         </section>
+        <FinanceFaq />
         <section className="public-section contact-section" id="contact">
           <div>
             <span className="eyebrow">05 / LET’S CONNECT</span>

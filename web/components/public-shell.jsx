@@ -16,7 +16,7 @@ export function PublicHeader() {
         <Brand />
         <nav aria-label="Main navigation">
           <a href="/#company">Our company</a>
-          <a href="/#approach">Our approach</a>
+          <a href="/#getting-started">Getting started</a>
           <a href="/#leadership">Our team</a>
           <a href="/updates">News & updates</a>
           <a href="/careers">Careers</a>
@@ -29,6 +29,7 @@ export function PublicHeader() {
           <summary aria-label="Open navigation">Menu ☰</summary>
           <nav>
             <a href="/#company">Our company</a>
+            <a href="/#getting-started">Getting started</a>
             <a href="/#leadership">Our team</a>
             <a href="/updates">News & updates</a>
             <a href="/careers">Careers</a>
@@ -59,6 +60,9 @@ export function PublicFooter({ company }) {
           <a href="/updates">News & updates</a>
           <a href="/careers">Careers</a>
           <a href="/loans">Loan application forms</a>
+          <a href="/guides/borrowing-basics">Borrowing basics</a>
+          <a href="/guides/preparing-an-enquiry">Prepare an enquiry</a>
+          <a href="/#questions">Common questions</a>
         </div>
         <div>
           <span className="eyebrow">GET IN TOUCH</span>
@@ -88,6 +92,7 @@ export function PublicFooter({ company }) {
         </span>
         <div>
           <a href="/privacy">Privacy</a>
+          <a href="/site-map">Site map</a>
           <a href="/admin/login">
             <LockKeyhole size={12} />
             Administrator sign-in

@@ -2,7 +2,7 @@ import { publicData } from "../../lib/public-data";
 import { PublicShell } from "../../components/public-shell";
 import { JobCard, PublicEmpty } from "../../components/content";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Careers" };
+export const metadata = { title: "Careers", description: "Explore published career opportunities at Samuel Finance Limited in Papua New Guinea.", alternates: { canonical: "/careers" } };
 export default async function Careers() {
   const { company, entries } = await publicData();
   const jobs = entries.filter(

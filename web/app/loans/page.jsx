@@ -4,6 +4,7 @@ import { PublicShell } from "../../components/public-shell";
 import { PublicEmpty } from "../../components/content";
 import PublicListing from "../../components/public-listing";
 import ShareButton from "../../components/share-button";
+import { guides } from "../../lib/guides";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Forms & resources", description: "Published application forms, documents and guidance from Samuel Finance Limited.", alternates: { canonical: "/loans" }, openGraph: { title: "Forms & resources | Samuel Finance Limited", description: "Find and share published forms, documents and guidance.", url: "/loans", type: "website", images: ["/assets/mountains.jpg"] } };
 export default async function Loans() {
@@ -51,6 +52,7 @@ export default async function Loans() {
               </a>
             </div>
           </div>
+          <section className="guide-library" aria-label="Helpful finance guides"><div className="listing-heading"><h2>Helpful finance guides</h2><span>Understand your next step</span></div><div className="guide-library-grid">{guides.map(guide => <article key={guide.slug}><span className="eyebrow">{guide.eyebrow}</span><h3><a href={`/guides/${guide.slug}`}>{guide.title}</a></h3><p>{guide.summary}</p><a className="text-link" href={`/guides/${guide.slug}`}>Read the guide <ArrowUpRight size={15} /></a></article>)}</div></section>
         </section>
       </main>
     </PublicShell>

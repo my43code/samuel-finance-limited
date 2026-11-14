@@ -661,6 +661,73 @@ try {
   await sharedPage.keyboard.press("Escape");
   await sharedPage.goto(base + "/loans", { waitUntil: "domcontentloaded" });
   assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, "Mobile resource list overflows");
+  // Exercise discovery and homepage movement with enough published fixture posts
+  // to overflow a desktop row. These rows exist only in this in-memory fixture.
+  for (let i = 0; i < 3; i++) state.entries.push({ ...sharedUpdate, id: `33333333-3333-4333-8333-33333333333${i}`, title: `Published fixture update ${i + 1}` });
+  const privateUpdate = { ...sharedUpdate, id: "44444444-4444-4444-8444-444444444444", title: "Private fixture draft", status: "draft" };
+  state.entries.push(privateUpdate);
+  let sitemap = await guest.request.get(base + "/sitemap.xml");
+  assert.equal(sitemap.status(), 200);
+  assert.match(sitemap.headers()["content-type"], /xml/);
+  let xml = await sitemap.text();
+  assert.ok(xml.includes("/updates/" + sharedUpdate.id));
+  assert.ok(xml.includes("/loans/" + resource.id));
+  assert.ok(xml.includes("/guides/borrowing-basics"));
+  assert.ok(!xml.includes(privateUpdate.id), "Sitemap exposed draft content");
+  assert.ok(!xml.includes("/admin") && !xml.includes("/api/"));
+  privateUpdate.status = "published";
+  assert.ok((await (await guest.request.get(base + "/sitemap.xml")).text()).includes(privateUpdate.id), "Newly published content missing from dynamic sitemap");
+  privateUpdate.status = "draft";
+  const robots = await (await guest.request.get(base + "/robots.txt")).text();
+  assert.match(robots, /Sitemap: https:\/\/samuelfinancelimited.com\/sitemap.xml/);
+  assert.match(robots, /Disallow: \/admin/);
+  assert.match(await (await guest.request.get(base + "/admin/login")).text(), /name="robots" content="noindex, nofollow"/);
+  await sharedPage.emulateMedia({ reducedMotion: "reduce" });
+  await sharedPage.setViewportSize({ width: 1440, height: 1000 });
+  await sharedPage.goto(base, { waitUntil: "domcontentloaded" });
+  assert.equal(await sharedPage.getByRole("dialog", { name: "Contact Samuel Finance" }).count(), 0, "Contact details should start collapsed");
+  await sharedPage.getByRole("button", { name: "Open contact details" }).click();
+  await sharedPage.getByRole("dialog", { name: "Contact Samuel Finance" }).waitFor();
+  await sharedPage.keyboard.press("Escape");
+  await sharedPage.getByRole("button", { name: "Open contact details" }).waitFor();
+  const newsSlider = sharedPage.getByRole("region", { name: "Latest news and updates", exact: true });
+  const resourceSlider = sharedPage.getByRole("region", { name: "Forms, resources and finance guides", exact: true });
+  await newsSlider.getByRole("button", { name: "Play latest news and updates slideshow" }).waitFor();
+  await newsSlider.getByRole("button", { name: "Next latest news and updates" }).click();
+  await sharedPage.waitForFunction(() => document.getElementById("homepage-news-track").scrollLeft > 50);
+  await newsSlider.locator(".home-carousel-track").focus();
+  await sharedPage.keyboard.press("Home");
+  await sharedPage.waitForFunction(() => document.getElementById("homepage-news-track").scrollLeft < 2);
+  await newsSlider.getByRole("button", { name: "Play latest news and updates slideshow" }).click();
+  await sharedPage.evaluate(() => document.activeElement.blur());
+  await sharedPage.mouse.move(0, 0);
+  await sharedPage.waitForFunction(() => document.getElementById("homepage-news-track").scrollLeft > 50, null, { timeout: 10000 });
+  await newsSlider.getByRole("button", { name: "Pause latest news and updates slideshow" }).click();
+  await resourceSlider.getByRole("button", { name: "Next forms, resources and finance guides" }).click();
+  await sharedPage.waitForFunction(() => document.getElementById("homepage-resources-track").scrollLeft > 50);
+  await resourceSlider.screenshot({ path: new URL("resource-slider-desktop.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Desktop homepage overflows");
+  const checklist = sharedPage.locator(".enquiry-checklist");
+  for (const checkbox of await checklist.getByRole("checkbox").all()) await checkbox.check();
+  await checklist.getByRole("status").filter({ hasText: "You have considered the key questions" }).waitFor();
+  await checklist.getByRole("button", { name: "Reset" }).click();
+  assert.equal(await checklist.locator("input:checked").count(), 0);
+  await sharedPage.locator(".faq-list summary").first().click();
+  assert.equal(await sharedPage.locator(".faq-list details").first().getAttribute("open"), "");
+  await sharedPage.setViewportSize({ width: 390, height: 844 });
+  await resourceSlider.scrollIntoViewIfNeeded();
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Mobile slider overflows");
+  await resourceSlider.screenshot({ path: new URL("resource-slider-mobile.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  await sharedPage.goto(base + "/guides/borrowing-basics", { waitUntil: "domcontentloaded" });
+  await sharedPage.getByRole("heading", { name: "Understand the cost of borrowing", exact: true }).waitFor();
+  assert.equal(await sharedPage.locator('link[rel="canonical"]').getAttribute("href"), "https://samuelfinancelimited.com/guides/borrowing-basics");
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Mobile guide overflows");
+  await sharedPage.screenshot({ path: new URL("borrowing-guide-mobile.png", output).pathname.replace(/^\/([A-Z]:)/, "$1"), fullPage: false });
+  assert.equal((await guest.request.get(base + "/guides/not-a-guide")).status(), 404);
+  await sharedPage.goto(base + "/site-map", { waitUntil: "domcontentloaded" });
+  await sharedPage.getByRole("link", { name: "Borrowing basics", exact: true }).waitFor();
+  assert.equal(await sharedPage.getByRole("link", { name: "Private fixture draft", exact: true }).count(), 0);
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Mobile sitemap overflows");
   await sharedPage.close();
   await page.getByRole("button", { name: "Overview", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -723,7 +790,7 @@ try {
   );
   assert.deepEqual(errors, [], "Browser runtime errors");
   console.log(
-    "PASS: admin authorization, login, draft privacy, publishing, PDF upload/download, linked-file protection, vacancy publishing, profile publishing, revision conflicts, logout, mobile layouts and browser runtime checks.",
+    "PASS: admin authorization, publishing, sharing, draft privacy, PDF downloads, dynamic sitemap/robots, homepage sliders and autoplay, preparation checklist, guides, mobile layouts and browser runtime checks.",
   );
 } catch (error) {
   console.error(logs);
