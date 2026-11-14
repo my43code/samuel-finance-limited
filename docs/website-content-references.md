@@ -14,6 +14,9 @@ eligibility, pricing and terms must be confirmed by the company.
 The homepage reads published CMS news and documents on each server request.
 The sliders expose the latest nine updates and seven documents, alongside
 permanent guide and preparation links. The full listing pages remain available.
+The hero image also carries a rotating panel interleaving up to three published
+news items and three documents. Each item links to its readable detail page and
+can be shared. Empty categories link to their libraries without fabricated news.
 Visitors can swipe, use navigation controls, or pause automatic movement.
 Reduced-motion visitors start with automatic movement paused.
 

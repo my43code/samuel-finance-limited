@@ -692,6 +692,33 @@ try {
   await sharedPage.getByRole("button", { name: "Open contact details" }).waitFor();
   const newsSlider = sharedPage.getByRole("region", { name: "Latest news and updates", exact: true });
   const resourceSlider = sharedPage.getByRole("region", { name: "Forms, resources and finance guides", exact: true });
+  const heroSlider = sharedPage.locator(".home-hero").getByRole("region", { name: "Featured news and resources", exact: true });
+  await heroSlider.getByRole("button", { name: "Play featured news and resources slideshow" }).waitFor();
+  await heroSlider.getByRole("button", { name: "Next featured news and resources" }).click();
+  await sharedPage.waitForFunction(() => document.getElementById("hero-highlights-track").scrollLeft > 50);
+  const heroResource = heroSlider.locator(".hero-highlight-card").filter({ has: sharedPage.getByRole("link", { name: "Personal loan application", exact: true }) });
+  assert.equal(await heroResource.getByRole("link", { name: "Open resource" }).getAttribute("href"), "/loans/" + resource.id);
+  await heroResource.getByRole("button", { name: "Share Personal loan application" }).click();
+  await shareDialog.waitFor();
+  assert.equal(await shareDialog.getByLabel("Direct link").inputValue(), base + "/loans/" + resource.id);
+  await sharedPage.keyboard.press("Escape");
+  await heroSlider.getByRole("button", { name: "Previous featured news and resources" }).click();
+  await sharedPage.waitForFunction(() => document.getElementById("hero-highlights-track").scrollLeft < 2);
+  await heroSlider.getByRole("button", { name: "Play featured news and resources slideshow" }).click();
+  await sharedPage.evaluate(() => document.activeElement.blur());
+  await sharedPage.mouse.move(0, 0);
+  await sharedPage.waitForFunction(() => document.getElementById("hero-highlights-track").scrollLeft > 50, null, { timeout: 10000 });
+  await heroSlider.getByRole("button", { name: "Pause featured news and resources slideshow" }).click();
+  await sharedPage.locator(".home-hero").screenshot({ path: new URL("hero-highlights-desktop.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  for (const width of [900, 390]) {
+    await sharedPage.setViewportSize({ width, height: 1000 });
+    assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `Hero overflows at ${width}px`);
+    await heroSlider.scrollIntoViewIfNeeded();
+    const fits = await heroSlider.evaluate(node => { const panel = node.closest(".hero-highlights").getBoundingClientRect(), visual = node.closest(".hero-visual").getBoundingClientRect(); return panel.left >= visual.left && panel.right <= visual.right + 1 && panel.top >= visual.top && panel.bottom <= visual.bottom + 1; });
+    assert.ok(fits, `Hero panel clipped at ${width}px`);
+    await sharedPage.locator(".hero-visual").screenshot({ path: new URL(`hero-highlights-${width}.png`, output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  }
+  await sharedPage.setViewportSize({ width: 1440, height: 1000 });
   await newsSlider.getByRole("button", { name: "Play latest news and updates slideshow" }).waitFor();
   await newsSlider.getByRole("button", { name: "Next latest news and updates" }).click();
   await sharedPage.waitForFunction(() => document.getElementById("homepage-news-track").scrollLeft > 50);

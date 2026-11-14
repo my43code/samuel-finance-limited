@@ -18,6 +18,7 @@ import FacebookIcon from "../components/facebook-icon";
 import { UpdateCard, EntryMedia, PublicEmpty, dateLabel } from "../components/content";
 import ShareButton from "../components/share-button";
 import HomeCarousel from "../components/home-carousel";
+import HeroHighlights from "../components/hero-highlights";
 import { GettingStarted, FinanceFaq } from "../components/finance-information";
 import { guides } from "../lib/guides";
 export const dynamic = "force-dynamic";
@@ -87,15 +88,7 @@ export default async function Home() {
               <span>RESILIENCE. INTEGRITY. PROGRESS.</span>
               <span>01 / OUR FOUNDATION</span>
             </div>
-            <div className="hero-image-card">
-              <span className="eyebrow">OUR GUIDING PRINCIPLE</span>
-              <p>
-                Progress is stronger
-                <br />
-                when it starts with <em>trust.</em>
-              </p>
-              <ArrowUpRight size={27} />
-            </div>
+            <HeroHighlights updates={updates} resources={resources} />
           </div>
         </section>
         <div className="values-ribbon">
