@@ -626,6 +626,13 @@ try {
   await sharedPage.getByRole("searchbox", { name: "Search news and updates" }).fill("no matching announcement");
   await sharedPage.getByRole("heading", { name: "No results for this search." }).waitFor();
   await sharedPage.getByRole("searchbox", { name: "Search news and updates" }).fill("");
+  await sharedPage.getByRole("button", { name: "Compact view", exact: true }).click();
+  assert.equal(await sharedPage.getByRole("button", { name: "Compact view", exact: true }).getAttribute("aria-pressed"), "true");
+  await sharedPage.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Compact news view overflows");
+  await sharedPage.locator(".public-listing").screenshot({ path: new URL("news-compact-mobile.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  await sharedPage.getByRole("button", { name: "Card view", exact: true }).click();
+  await sharedPage.setViewportSize({ width: 1280, height: 900 });
   await sharedPage.getByRole("button", { name: "Share A considered way forward", exact: true }).click();
   const sharedUpdate = state.entries.find(e => e.title === "A considered way forward");
   const shareDialog = sharedPage.getByRole("dialog", { name: "Share this with someone." });
@@ -661,11 +668,17 @@ try {
   await sharedPage.keyboard.press("Escape");
   await sharedPage.goto(base + "/loans", { waitUntil: "domcontentloaded" });
   assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, "Mobile resource list overflows");
+  for (const name of ["Compact view", "Card view"]) {
+    await sharedPage.getByRole("button", { name, exact: true }).click();
+    assert.equal(await sharedPage.getByRole("button", { name, exact: true }).getAttribute("aria-pressed"), "true");
+    assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `Mobile resource ${name} overflows`);
+  }
   // Exercise discovery and homepage movement with enough published fixture posts
   // to overflow a desktop row. These rows exist only in this in-memory fixture.
   for (let i = 0; i < 3; i++) state.entries.push({ ...sharedUpdate, id: `33333333-3333-4333-8333-33333333333${i}`, title: `Published fixture update ${i + 1}` });
   const privateUpdate = { ...sharedUpdate, id: "44444444-4444-4444-8444-444444444444", title: "Private fixture draft", status: "draft" };
   state.entries.push(privateUpdate);
+  state.entries.push({ ...sharedUpdate, id: "55555555-5555-4555-8555-555555555555", kind: "media", title: "A published image", media_id: state.media.find(media => media.mime.startsWith("image/")).id });
   let sitemap = await guest.request.get(base + "/sitemap.xml");
   assert.equal(sitemap.status(), 200);
   assert.match(sitemap.headers()["content-type"], /xml/);
@@ -685,6 +698,13 @@ try {
   await sharedPage.emulateMedia({ reducedMotion: "reduce" });
   await sharedPage.setViewportSize({ width: 1440, height: 1000 });
   await sharedPage.goto(base, { waitUntil: "domcontentloaded" });
+  const explorer = sharedPage.locator(".next-step-explorer");
+  await explorer.getByRole("tab", { name: "Find a form", exact: true }).click();
+  assert.equal(await explorer.getByRole("link", { name: "Browse forms & resources" }).getAttribute("href"), "/loans");
+  await sharedPage.keyboard.press("ArrowRight");
+  assert.equal(await explorer.getByRole("tab", { name: "Stay informed" }).getAttribute("aria-selected"), "true");
+  assert.equal(await explorer.getByRole("tabpanel").count(), 1);
+  await explorer.screenshot({ path: new URL("next-step-desktop.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
   assert.equal(await sharedPage.getByRole("dialog", { name: "Contact Samuel Finance" }).count(), 0, "Contact details should start collapsed");
   await sharedPage.getByRole("button", { name: "Open contact details" }).click();
   await sharedPage.getByRole("dialog", { name: "Contact Samuel Finance" }).waitFor();
@@ -695,7 +715,7 @@ try {
   const heroSlider = sharedPage.locator(".home-hero").getByRole("region", { name: "Featured news and resources", exact: true });
   await heroSlider.getByRole("button", { name: "Play featured news and resources slideshow" }).waitFor();
   await heroSlider.getByRole("button", { name: "Next featured news and resources" }).click();
-  await sharedPage.waitForFunction(() => document.getElementById("hero-highlights-track").scrollLeft > 50);
+  await heroSlider.locator('[aria-label="Show featured news and resources from item 2"][aria-pressed="true"]').waitFor();
   const heroResource = heroSlider.locator(".hero-highlight-card").filter({ has: sharedPage.getByRole("link", { name: "Personal loan application", exact: true }) });
   assert.equal(await heroResource.getByRole("link", { name: "Open resource" }).getAttribute("href"), "/loans/" + resource.id);
   await heroResource.getByRole("button", { name: "Share Personal loan application" }).click();
@@ -703,11 +723,11 @@ try {
   assert.equal(await shareDialog.getByLabel("Direct link").inputValue(), base + "/loans/" + resource.id);
   await sharedPage.keyboard.press("Escape");
   await heroSlider.getByRole("button", { name: "Previous featured news and resources" }).click();
-  await sharedPage.waitForFunction(() => document.getElementById("hero-highlights-track").scrollLeft < 2);
+  await heroSlider.locator('[aria-label="Show featured news and resources from item 1"][aria-pressed="true"]').waitFor();
   await heroSlider.getByRole("button", { name: "Play featured news and resources slideshow" }).click();
   await sharedPage.evaluate(() => document.activeElement.blur());
   await sharedPage.mouse.move(0, 0);
-  await sharedPage.waitForFunction(() => document.getElementById("hero-highlights-track").scrollLeft > 50, null, { timeout: 10000 });
+  await heroSlider.locator('[aria-label="Show featured news and resources from item 2"][aria-pressed="true"]').waitFor({ timeout: 10000 });
   await heroSlider.getByRole("button", { name: "Pause featured news and resources slideshow" }).click();
   await sharedPage.locator(".home-hero").screenshot({ path: new URL("hero-highlights-desktop.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
   for (const width of [900, 390]) {
@@ -745,6 +765,31 @@ try {
   await resourceSlider.scrollIntoViewIfNeeded();
   assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Mobile slider overflows");
   await resourceSlider.screenshot({ path: new URL("resource-slider-mobile.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  await explorer.getByRole("tab", { name: "Explore finance", exact: true }).click();
+  await explorer.screenshot({ path: new URL("next-step-mobile.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Mobile explorer overflows");
+  await heroSlider.scrollIntoViewIfNeeded();
+  await heroSlider.locator(".home-carousel-track").dispatchEvent("pointerdown", { pointerType: "touch", clientX: 270, clientY: 200 });
+  await heroSlider.locator(".home-carousel-track").dispatchEvent("pointerup", { pointerType: "touch", clientX: 60, clientY: 205 });
+  await heroSlider.locator('[aria-label="Show featured news and resources from item 3"][aria-pressed="true"]').waitFor();
+  assert.equal(await heroSlider.locator(".home-carousel-slide[inert]").count(), 3, "Inactive fading slides remain interactive");
+  const publicGallery = sharedPage.locator(".story-gallery");
+  await publicGallery.getByRole("button", { name: "View A moment from Samuel Finance", exact: true }).click();
+  const viewer = sharedPage.locator(".story-viewer");
+  await viewer.waitFor({ state: "visible" });
+  assert.equal(await viewer.locator("video[controls]").count(), 1);
+  await viewer.getByRole("button", { name: "Next gallery item" }).click();
+  assert.equal(await viewer.locator("img").count(), 1);
+  assert.equal(await viewer.locator("video").count(), 0);
+  await sharedPage.keyboard.press("ArrowLeft");
+  assert.equal(await viewer.locator("video[controls]").count(), 1);
+  await sharedPage.keyboard.press("Escape");
+  await viewer.waitFor({ state: "hidden" });
+  assert.equal(await viewer.locator("video").count(), 0, "Closed gallery left a video mounted");
+  await publicGallery.getByRole("button", { name: "View A published image", exact: true }).click();
+  assert.equal(await sharedPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "Mobile media viewer overflows");
+  await viewer.screenshot({ path: new URL("story-viewer-mobile.png", output).pathname.replace(/^\/([A-Z]:)/, "$1") });
+  await viewer.getByRole("button", { name: "Close media viewer" }).click();
   await sharedPage.goto(base + "/guides/borrowing-basics", { waitUntil: "domcontentloaded" });
   await sharedPage.getByRole("heading", { name: "Understand the cost of borrowing", exact: true }).waitFor();
   assert.equal(await sharedPage.locator('link[rel="canonical"]').getAttribute("href"), "https://samuelfinancelimited.com/guides/borrowing-basics");
@@ -817,7 +862,7 @@ try {
   );
   assert.deepEqual(errors, [], "Browser runtime errors");
   console.log(
-    "PASS: admin authorization, publishing, sharing, draft privacy, PDF downloads, dynamic sitemap/robots, homepage sliders and autoplay, preparation checklist, guides, mobile layouts and browser runtime checks.",
+    "PASS: admin authorization, publishing, sharing, draft privacy, PDF downloads, sitemap/robots, card/compact views, guided explorer, fade/slide autoplay and swipe, media viewer navigation/cleanup, mobile layouts and browser runtime checks.",
   );
 } catch (error) {
   console.error(logs);

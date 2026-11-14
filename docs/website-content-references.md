@@ -14,11 +14,15 @@ eligibility, pricing and terms must be confirmed by the company.
 The homepage reads published CMS news and documents on each server request.
 The sliders expose the latest nine updates and seven documents, alongside
 permanent guide and preparation links. The full listing pages remain available.
-The hero image also carries a rotating panel interleaving up to three published
+The hero image also carries a fading panel interleaving up to three published
 news items and three documents. Each item links to its readable detail page and
 can be shared. Empty categories link to their libraries without fabricated news.
 Visitors can swipe, use navigation controls, or pause automatic movement.
 Reduced-motion visitors start with automatic movement paused.
+The guided next-step explorer provides three keyboard-accessible routes into
+finance information, published documents and news. Listing pages offer cards
+and compact layouts. Published gallery images/videos open in an accessible
+viewer; videos stop when visitors close it or change the selected item.
 
 `/sitemap.xml` reads published public detail pages independently of homepage
 limits. `/robots.txt` advertises it, and `/site-map` is a human-readable directory.

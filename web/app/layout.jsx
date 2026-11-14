@@ -4,6 +4,9 @@ import "./corporate.css";
 import "./carousel.css";
 import "./finance.css";
 import "./hero-highlights.css";
+import "./listing-views.css";
+import "./story-gallery.css";
+import "./experience.css";
 export const metadata = {
   metadataBase: new URL("https://samuelfinancelimited.com"),
   title: {

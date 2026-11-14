@@ -4,7 +4,7 @@ import { ArrowUp } from "lucide-react";
 export default function PublicExperience() {
   const [progress, setProgress] = useState(0), [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const measure = () => { const distance = document.documentElement.scrollHeight - window.innerHeight; setProgress(distance > 0 ? Math.min(1, window.scrollY / distance) : 0); setScrolled(window.scrollY > 650); };
+    const measure = () => { const distance = document.documentElement.scrollHeight - window.innerHeight; setProgress(distance > 0 ? Math.min(1, window.scrollY / distance) : 0); setScrolled(window.scrollY > 650); document.querySelector(".public-site")?.classList.toggle("has-scrolled", window.scrollY > 80); };
     let frame;
     const scroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
     measure(); window.addEventListener("scroll", scroll, { passive: true }); window.addEventListener("resize", scroll);
@@ -12,7 +12,7 @@ export default function PublicExperience() {
     let observer;
     if (!reduce && "IntersectionObserver" in window) {
       observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add("is-visible"); observer.unobserve(entry.target); } }), { threshold: 0.06 });
-      document.querySelectorAll('.company-section, .approach-section, .leadership-section, .news-section, .resources-band, .gallery-section').forEach(section => { if(section.getBoundingClientRect().top > window.innerHeight) { section.classList.add("reveal-section"); observer.observe(section); } });
+      document.querySelectorAll('.next-step-explorer, .company-section, .approach-section, .leadership-section, .news-section, .home-resources-section, .resources-band, .gallery-section, .finance-faq, .contact-section').forEach(section => { if(section.getBoundingClientRect().top > window.innerHeight) { section.classList.add("reveal-section"); observer.observe(section); } });
     }
     const currentPath = window.location.pathname;
     document.querySelectorAll('.public-header nav a').forEach(a => { const path = new URL(a.href).pathname; if(path !== '/' && (currentPath === path || currentPath.startsWith(path + '/'))) a.setAttribute('aria-current','page'); });

@@ -23,7 +23,7 @@ export default function HeroHighlights({ updates, resources }) {
   }
   return <div className="hero-highlights">
     <div className="hero-highlights-heading"><span className="eyebrow">AT A GLANCE</span><div><a href="/updates">News & updates</a><span aria-hidden="true">/</span><a href="/loans">Forms & resources</a></div></div>
-    <HomeCarousel id="hero-highlights" label="Featured news and resources" variant="hero">
+    <HomeCarousel id="hero-highlights" label="Featured news and resources" variant="hero" transition="fade">
       {slides.map(slide => <article className="hero-highlight-card" key={slide.id}>
         <div className="hero-highlight-meta"><span className="eyebrow">{slide.kind === "news" ? <Newspaper size={14} /> : <FileText size={14} />}{slide.category}</span>{slide.date && <time dateTime={slide.date}>{dateLabel(slide.date)}</time>}</div>
         <h2><a href={slide.path}>{slide.title}</a></h2>

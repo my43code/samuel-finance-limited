@@ -15,10 +15,12 @@ import { publicData } from "../lib/public-data";
 import { mediaUrl } from "../lib/defaults";
 import { PublicShell } from "../components/public-shell";
 import FacebookIcon from "../components/facebook-icon";
-import { UpdateCard, EntryMedia, PublicEmpty, dateLabel } from "../components/content";
+import { UpdateCard, PublicEmpty, dateLabel } from "../components/content";
 import ShareButton from "../components/share-button";
 import HomeCarousel from "../components/home-carousel";
 import HeroHighlights from "../components/hero-highlights";
+import NextStepExplorer from "../components/next-step-explorer";
+import StoryGallery from "../components/story-gallery";
 import { GettingStarted, FinanceFaq } from "../components/finance-information";
 import { guides } from "../lib/guides";
 export const dynamic = "force-dynamic";
@@ -104,11 +106,7 @@ export default async function Home() {
           </strong>
         </div>
         {updates[0] && <div className="latest-announcement"><span><i /> LATEST FROM SAMUEL FINANCE</span><a href={`/updates/${updates[0].id}`}>{updates[0].title}<ArrowUpRight size={17} /></a><a className="announcement-all" href="/updates">All updates <ArrowUpRight size={14} /></a></div>}
-        <section className="corporate-shortcuts" aria-label="Explore Samuel Finance">
-          <a href="#company"><span>01 / WHO WE ARE</span><strong>A foundation of trust.</strong><p>Our purpose, principles and approach to finance.</p><ArrowUpRight size={22} /></a>
-          <a href="#getting-started"><span>02 / GET PREPARED</span><strong>Clarity before commitment.</strong><p>Useful guides, practical questions and a preparation checklist.</p><ArrowUpRight size={22} /></a>
-          <a href="/loans"><span>03 / TAKE THE NEXT STEP</span><strong>Information within reach.</strong><p>Published forms and resources, ready to share.</p><ArrowUpRight size={22} /></a>
-        </section>
+        <NextStepExplorer />
         <section className="public-section company-section" id="company">
           <div>
             <span className="eyebrow">01 / OUR COMPANY</span>
@@ -277,17 +275,7 @@ export default async function Home() {
                 </h2>
               </div>
             </div>
-            <div className="public-gallery">
-              {media.map((e) => (
-                <figure key={e.id}>
-                  <EntryMedia entry={e} />
-                  <figcaption>
-                    <strong>{e.title}</strong>
-                    <span>{e.summary}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+            <StoryGallery entries={media} />
           </section>
         )}
         <section className="resources-band">
