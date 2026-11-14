@@ -204,12 +204,12 @@ export default async function Home() {
                 building a thoughtful, accountable way forward.
               </p>
             </div>
-            <div className="leadership-grid">
+            <div className={`leadership-grid${leadership.length === 2 ? " leadership-grid-pair" : leadership.length === 1 ? " leadership-grid-single" : ""}`}>
               {leadership.map((leader, index) => {
                 const image = leader.media?.mime?.startsWith("image/");
                 return (
                   <article
-                    className={`leader-card ${index === 0 ? "featured" : ""}`}
+                    className="leader-card"
                     key={leader.id}
                   >
                     <div className="leader-photo">
